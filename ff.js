@@ -1,4 +1,5 @@
-var history = new Array(),
+var i = 0, c, ctx,
+	boardhistory = new Array(),
 	board = [
 		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
@@ -13,8 +14,7 @@ var history = new Array(),
 		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 	];
-history.push( board );
-
+boardhistory.push( board );
 
 
 // test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
@@ -29,9 +29,10 @@ function filltest( tempboard, testx, testy, front ) {
 		front.push( testpt );
 	}	
 }
+
 // flood fill algorithm
 function flood( tempboard, x, y ) {
-	var i, front, oldfront;
+	var front, oldfront;
 
 	// start with a square to be filled
 	tempboard[x][y] = 'fill';
@@ -46,9 +47,11 @@ function flood( tempboard, x, y ) {
 	// save the old list of recently filled squares and construct a new one
 	oldfront = front;
 	front = new Array();
+
 	// if the old list is empty we are done
 	while (oldfront.length) {
 		for (i = 0; i < oldfront.length; i++) {
+
 			// add to the new list
 			filltest( tempboard, oldfront[i].x - 1, oldfront[i].y, front )
 			filltest( tempboard, oldfront[i].x + 1, oldfront[i].y, front )
@@ -62,8 +65,7 @@ function flood( tempboard, x, y ) {
 
 // find an empty square
 function findempty( bd, pt ) {
-	var x = 0, y = 0;
-
+	var x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
 			if (bd[x][y] == 0) {
@@ -74,6 +76,7 @@ function findempty( bd, pt ) {
 		}
 	}
 }
+
 // test a square to see if it should be a road:  block it, flood fill an area, and see if any squares are not flooded
 function testroad( x, y ) {
 	var pt = new Object(), tempboard = $.extend( true, [], board );
@@ -91,9 +94,9 @@ function testroad( x, y ) {
 	}
 	return false;
 }
+
 function findroads( board ) {
 	var x, y;
-
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
 			if (board[x][y] == 0) {
@@ -107,7 +110,7 @@ function findroads( board ) {
 
 
 function drawboard() {
-	var i, x, y, xdraw, ydraw;
+	var x, y, xdraw, ydraw;
 
 	ctx.clearRect( 0, 0, 501, 501 );
 	ctx.beginPath();
@@ -124,13 +127,13 @@ function drawboard() {
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
 			if (board[x][y] == 'road') {
-				ctx.fillStyle = '808080';
+				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
 			} else if (board[x][y] == 'park') {
-				ctx.fillStyle = '008000';
+				ctx.fillStyle = '#008000';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );			
 			} else if (board[x][y] == 'fill') {
-				ctx.fillStyle = '200000';
+				ctx.fillStyle = '#200000';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );			
 			}
 		}
@@ -140,9 +143,13 @@ function drawboard() {
 
 
 $( document ).ready( function(){
-	c = document.getElementById( 'board' ),
-	ctx = c.getContext( '2d' ),
+
+	c = document.getElementById( 'board' );
+	ctx = c.getContext( '2d' );
+
 	$( '#board' ).mousemove( function( e ) {
+		var x, y, xsq, ysq, xdraw, ydraw;
+
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
 		xsq = Math.floor( x/50 );
@@ -150,10 +157,13 @@ $( document ).ready( function(){
 		xdraw = xsq*50 + 9;
 		ydraw = ysq*50 + 9;
 		drawboard();
-		ctx.fillStyle = '00ff00';
+		ctx.fillStyle = '#000080';
 		ctx.fillRect( xdraw, ydraw, 33, 33 );
 	});
+
 	$( '#board' ).click( function( e ) {
+		var x, y, xsq, ysq, xboard, yboard;
+
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
 		xsq = Math.floor( x/50 );
@@ -161,18 +171,20 @@ $( document ).ready( function(){
 		xboard = xsq + 1;
 		yboard = ysq + 1;
 		if (board[xboard][yboard] == 0) {
-			history.push( board );
+			boardhistory.push( board );
 			board = $.extend( true, [], board );
 			board[xboard][yboard] = 'park';
 			findroads( board );
 			drawboard();
 		}
 	});
+
 	$( '#undo' ).click( function( e ) {
-		if (history.length > 0) {
-			board = history.pop();
+		if (boardhistory.length > 0) {
+			board = boardhistory.pop();
 			drawboard();
 		}
 	});
+
 	drawboard();
 });
