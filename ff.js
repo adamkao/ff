@@ -160,6 +160,9 @@ $( document ).ready( function(){
 		ctx.fillStyle = '#000080';
 		ctx.fillRect( xdraw, ydraw, 33, 33 );
 	});
+	$( '#board' ).mouseleave( function( e ) {
+		drawboard();
+	});
 
 	$( '#board' ).click( function( e ) {
 		var x, y, xsq, ysq, xboard, yboard;
