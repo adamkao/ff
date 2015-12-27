@@ -21,13 +21,13 @@ boardhistory.push( board );
 function filltest( tempboard, testx, testy, front ) {
 	var testpt;
 
-	if ((tempboard[testx][testy] == 0) || (tempboard[testx][testy] == 'road')) {
+	if ((tempboard[testx][testy] === 0) || (tempboard[testx][testy] === 'road')) {
 		tempboard[testx][testy] = 'fill';
 		testpt = new Object();
 		testpt.x = testx;
 		testpt.y = testy;
 		front.push( testpt );
-	}	
+	}
 }
 
 // flood fill algorithm
@@ -68,7 +68,7 @@ function findempty( bd, pt ) {
 	var x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
-			if (bd[x][y] == 0) {
+			if (bd[x][y] === 0) {
 				pt.x = x;
 				pt.y = y;
 				return;
@@ -99,7 +99,7 @@ function findroads( board ) {
 	var x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
-			if (board[x][y] == 0) {
+			if (board[x][y] === 0) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
 				}
@@ -123,18 +123,18 @@ function drawboard() {
 	ctx.strokeStyle = 'black';
 	ctx.lineWidth = 1;
 	ctx.stroke();
-	
+
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
-			if (board[x][y] == 'road') {
+			if (board[x][y] === 'road') {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
-			} else if (board[x][y] == 'park') {
+			} else if (board[x][y] === 'park') {
 				ctx.fillStyle = '#008000';
-				ctx.fillRect( xdraw, ydraw, 49, 49 );			
-			} else if (board[x][y] == 'fill') {
+				ctx.fillRect( xdraw, ydraw, 49, 49 );
+			} else if (board[x][y] === 'fill') {
 				ctx.fillStyle = '#200000';
-				ctx.fillRect( xdraw, ydraw, 49, 49 );			
+				ctx.fillRect( xdraw, ydraw, 49, 49 );
 			}
 		}
 	}
@@ -173,7 +173,7 @@ $( document ).ready( function(){
 		ysq = Math.floor( y/50 );
 		xboard = xsq + 1;
 		yboard = ysq + 1;
-		if (board[xboard][yboard] == 0) {
+		if (board[xboard][yboard] === 0) {
 			boardhistory.push( board );
 			board = $.extend( true, [], board );
 			board[xboard][yboard] = 'park';
