@@ -1,5 +1,7 @@
 var i = 0, c, ctx,
-	boardhistory = new Array(),
+	selpiece = '#spec',
+	speclist = [],
+	spechistory = [],
 	board = [
 		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
@@ -13,7 +15,9 @@ var i = 0, c, ctx,
 		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
-	];
+	],
+	boardhistory = [];
+spechistory.push( speclist ),
 boardhistory.push( board );
 
 
@@ -108,6 +112,9 @@ function findroads( board ) {
 	}
 }
 
+function imgdrawat( piece, xsq, ysq ){
+	ctx.drawImage( $( piece )[0], xsq*50 - 45 , ysq*50 - 45 )
+}
 
 function drawboard() {
 	var x, y, xdraw, ydraw;
@@ -126,21 +133,24 @@ function drawboard() {
 
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
-			if (board[x][y] === 'road') {
+			p = board[x][y];
+			if (p === 'road') {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
-			} else if (board[x][y] === 'park') {
-				ctx.fillStyle = '#008000';
-				ctx.fillRect( xdraw, ydraw, 49, 49 );
-			} else if (board[x][y] === 'fill') {
-				ctx.fillStyle = '#200000';
-				ctx.fillRect( xdraw, ydraw, 49, 49 );
+			} else if (p === 'park') {
+				imgdrawat( '#park', x, y );
+			} else if (p === 'spec') {
+				imgdrawat( '#spec', x, y );
 			}
 		}
 	}
 }
 
-
+function switchselpiece( id ) {
+	$( selpiece ).css( 'border', 'solid 3px white' );
+	selpiece = id;
+	$( selpiece ).css( 'border', 'solid 3px black' );
+}
 
 $( document ).ready( function(){
 
@@ -175,16 +185,30 @@ $( document ).ready( function(){
 		yboard = ysq + 1;
 		if (board[xboard][yboard] === 0) {
 			boardhistory.push( board );
+			spechistory.push( speclist );
 			board = $.extend( true, [], board );
-			board[xboard][yboard] = 'park';
+			if (selpiece === '#park') {
+				board[xboard][yboard] = 'park';
+			} else if (selpiece === '#spec') {
+				board[xboard][yboard] = 'spec';
+				speclist.push( { x: xboard, y: yboard } );
+			}
 			findroads( board );
 			drawboard();
 		}
 	});
 
+	selpiece = '#spec',
+	$( '#park' ).css( 'border', 'solid 3px white' );
+	$( '#spec' ).css( 'border', 'solid 3px black' );
+
+	$( '#park' ).click( function() {	switchselpiece( '#park' ) } );
+	$( '#spec' ).click( function() {	switchselpiece( '#spec' ) } );
+
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
 			board = boardhistory.pop();
+			speclist = spechistory.pop();
 			drawboard();
 		}
 	});
