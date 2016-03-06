@@ -38,29 +38,19 @@ function filltest( tempboard, testx, testy, front ) {
 function flood( tempboard, x, y ) {
 	var front, oldfront;
 
-	// start with a square to be filled
-	tempboard[x][y] = 'fill';
-
-	// test squares orthogonally adjacent to this square and fill them if they are eligible, keeping a list of recently filled squares
 	front = new Array();
-	filltest( tempboard, x - 1, y, front )
-	filltest( tempboard, x + 1, y, front )
-	filltest( tempboard, x , y - 1, front )
-	filltest( tempboard, x, y + 1, front )
+	filltest( tempboard, x, y, front );
 
-	// save the old list of recently filled squares and construct a new one
 	oldfront = front;
 	front = new Array();
 
 	// if the old list is empty we are done
 	while (oldfront.length) {
 		for (i = 0; i < oldfront.length; i++) {
-
-			// add to the new list
-			filltest( tempboard, oldfront[i].x - 1, oldfront[i].y, front )
-			filltest( tempboard, oldfront[i].x + 1, oldfront[i].y, front )
-			filltest( tempboard, oldfront[i].x, oldfront[i].y - 1, front )
-			filltest( tempboard, oldfront[i].x, oldfront[i].y + 1, front )
+			filltest( tempboard, oldfront[i].x - 1, oldfront[i].y, front );
+			filltest( tempboard, oldfront[i].x + 1, oldfront[i].y, front );
+			filltest( tempboard, oldfront[i].x, oldfront[i].y - 1, front );
+			filltest( tempboard, oldfront[i].x, oldfront[i].y + 1, front );
 		}
 		oldfront = front;
 		front = new Array();
@@ -72,7 +62,7 @@ function findempty( bd, pt ) {
 	var x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
-			if (bd[x][y] === 0) {
+			if ((bd[x][y] === 0) || (bd[x][y] === 'road')) {
 				pt.x = x;
 				pt.y = y;
 				return;
@@ -112,6 +102,27 @@ function findroads( board ) {
 	}
 }
 
+function checkspec( board, x, y ) {
+	var	adjcount = (
+		((board[x - 1][y] !== 'road') && (board[x - 1][y] !== 0))
+		+ ((board[x + 1][y] !== 'road') && (board[x + 1][y] !== 0))
+		+ ((board[x][y - 1] !== 'road') && (board[x][y - 1] !== 0))
+		+ ((board[x][y + 1] !== 'road') && (board[x][y + 1] !== 0))
+		);
+
+	if (adjcount === 3) {
+		if (board[x - 1][y] === 0) {
+			board[x - 1][y] = 'road';
+		} else if (board[x + 1][y] === 0) {
+			board[x + 1][y] = 'road';
+		} else if (board[x][y - 1] === 0) {
+			board[x][y - 1] = 'road';
+		} else {
+			board[x][y + 1] = 'road';
+		}
+	}
+}
+
 function imgdrawat( piece, xsq, ysq ){
 	ctx.drawImage( $( piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
@@ -133,7 +144,6 @@ function drawboard() {
 
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
-			p = board[x][y];
 			if (p === 'road') {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
@@ -159,7 +169,6 @@ $( document ).ready( function(){
 
 	$( '#board' ).mousemove( function( e ) {
 		var x, y, xsq, ysq, xdraw, ydraw;
-
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
 		xsq = Math.floor( x/50 );
@@ -175,7 +184,7 @@ $( document ).ready( function(){
 	});
 
 	$( '#board' ).click( function( e ) {
-		var x, y, xsq, ysq, xboard, yboard;
+		var x, y, xsq, ysq, xboard, yboard, adjcount = 0;
 
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
@@ -185,25 +194,41 @@ $( document ).ready( function(){
 		yboard = ysq + 1;
 		if (board[xboard][yboard] === 0) {
 			boardhistory.push( board );
-			spechistory.push( speclist );
 			board = $.extend( true, [], board );
 			if (selpiece === '#park') {
 				board[xboard][yboard] = 'park';
-			} else if (selpiece === '#spec') {
-				board[xboard][yboard] = 'spec';
-				speclist.push( { x: xboard, y: yboard } );
+			} else if (selpiece === '#out') {
+				board[xboard][yboard] = 'out';
+				checkspec( board, xboard, yboard );
+			} else if (selpiece === '#fact') {
+				board[xboard][yboard] = 'fact';
+				checkspec( board, xboard, yboard );
 			}
 			findroads( board );
+			if ((board[xboard - 1][yboard] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
+				checkspec( board, xboard - 1, yboard );
+			}
+			if ((board[xboard + 1][yboard] === 'out') || (board[xboard + 1][yboard] === 'fact')) {
+				checkspec( board, xboard + 1, yboard );
+			}
+			if ((board[xboard][yboard - 1] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
+				checkspec( board, xboard, yboard - 1 );
+			}
+			if ((board[xboard - 1][yboard] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
+				checkspec( board, xboard, yboard + 1 );
+			}
 			drawboard();
 		}
 	});
 
 	selpiece = '#spec',
 	$( '#park' ).css( 'border', 'solid 3px white' );
-	$( '#spec' ).css( 'border', 'solid 3px black' );
+	$( '#out' ).css( 'border', 'solid 3px black' );
+	$( '#fact' ).css( 'border', 'solid 3px black' );
 
 	$( '#park' ).click( function() {	switchselpiece( '#park' ) } );
-	$( '#spec' ).click( function() {	switchselpiece( '#spec' ) } );
+	$( '#out' ).click( function() {		switchselpiece( '#out' ) } );
+	$( '#fact' ).click( function() {	switchselpiece( '#fact' ) } );
 
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
