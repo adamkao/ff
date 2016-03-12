@@ -1,22 +1,22 @@
 var i = 0, c, ctx,
-	selpiece = '#spec',
-	speclist = [],
-	spechistory = [],
-	board = [
-		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-		[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
-	],
-	boardhistory = [];
+selpiece = '#spec',
+speclist = [],
+spechistory = [],
+board = [
+[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
+[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'afact', -1 ],
+[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
+],
+boardhistory = [];
 spechistory.push( speclist ),
 boardhistory.push( board );
 
@@ -144,13 +144,14 @@ function drawboard() {
 
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
-			if (p === 'road') {
+			p = board[x][y];
+			if ((p === 0 ) || (p === -1)) {
+				/* do nothing */
+			} else if (p === 'road') {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
-			} else if (p === 'park') {
-				imgdrawat( '#park', x, y );
-			} else if (p === 'spec') {
-				imgdrawat( '#spec', x, y );
+			} else {
+				imgdrawat( '#' + p, x, y );
 			}
 		}
 	}
@@ -184,7 +185,7 @@ $( document ).ready( function(){
 	});
 
 	$( '#board' ).click( function( e ) {
-		var x, y, xsq, ysq, xboard, yboard, adjcount = 0;
+		var x, y, xsq, ysq, xboard, yboard, testx, testy, substr, adjcount = 0;
 
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
@@ -205,17 +206,33 @@ $( document ).ready( function(){
 				checkspec( board, xboard, yboard );
 			}
 			findroads( board );
-			if ((board[xboard - 1][yboard] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
-				checkspec( board, xboard - 1, yboard );
+			testx = xboard - 1; testy = yboard;
+			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
+				substr = (board[testx][testy]).substr(2, 3);
+				if ((substr === 'out') || (substr === 'act')) {
+					checkspec( board, testx, testy );
+				}
 			}
-			if ((board[xboard + 1][yboard] === 'out') || (board[xboard + 1][yboard] === 'fact')) {
-				checkspec( board, xboard + 1, yboard );
+			testx = xboard + 1; testy = yboard;
+			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
+				substr = (board[testx][testy]).substr(2, 3);
+				if ((substr === 'out') || (substr === 'act')) {
+					checkspec( board, testx, testy );
+				}
 			}
-			if ((board[xboard][yboard - 1] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
-				checkspec( board, xboard, yboard - 1 );
+			testx = xboard; 	testy = yboard - 1;
+			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
+				substr = (board[testx][testy]).substr(2, 3);
+				if ((substr === 'out') || (substr === 'act')) {
+					checkspec( board, testx, testy );
+				}
 			}
-			if ((board[xboard - 1][yboard] === 'out') || (board[xboard - 1][yboard] === 'fact')) {
-				checkspec( board, xboard, yboard + 1 );
+			testx = xboard;		testy = yboard + 1;
+			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
+				substr = (board[testx][testy]).substr(2, 3);
+				if ((substr === 'out') || (substr === 'act')) {
+					checkspec( board, testx, testy );
+				}
 			}
 			drawboard();
 		}
