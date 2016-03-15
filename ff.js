@@ -13,7 +13,7 @@ board = [
 [ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 [ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 [ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'afact', -1 ],
+[ -1, 'afact', 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 ],
 boardhistory = [];
@@ -164,6 +164,17 @@ function switchselpiece( id ) {
 }
 
 $( document ).ready( function(){
+	var x, y;
+
+	x = Math.floor( Math.random() * 5 + 6 );
+	y = Math.floor( Math.random() * 5 + 6 );
+	board[x][y] = 'bfact';
+	x = Math.floor( Math.random() * 5 + 1 );
+	y = Math.floor( Math.random() * 5 + 6 );
+	board[x][y] = 'cfact';
+	x = Math.floor( Math.random() * 5 + 1 );
+	y = Math.floor( Math.random() * 5 + 1 );
+	board[x][y] = 'dfact';
 
 	c = document.getElementById( 'board' );
 	ctx = c.getContext( '2d' );
@@ -185,7 +196,7 @@ $( document ).ready( function(){
 	});
 
 	$( '#board' ).click( function( e ) {
-		var x, y, xsq, ysq, xboard, yboard, testx, testy, substr, adjcount = 0;
+		var x, y, xsq, ysq, xboard, yboard, testx, testy, type, s, adjcount = 0;
 
 		x = e.pageX - this.offsetLeft;
 		y = e.pageY - this.offsetTop;
@@ -206,46 +217,37 @@ $( document ).ready( function(){
 				checkspec( board, xboard, yboard );
 			}
 			findroads( board );
-			testx = xboard - 1; testy = yboard;
-			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
-				substr = (board[testx][testy]).substr(2, 3);
-				if ((substr === 'out') || (substr === 'act')) {
+			testx = xboard - 1; testy = yboard; type = board[testx][testy];
+			if ((type !== 0) && (type !== -1)) {
+				s = type.substr(2, 3);
+				if ((s === 'out') || (s === 'act')) {
 					checkspec( board, testx, testy );
 				}
 			}
-			testx = xboard + 1; testy = yboard;
-			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
-				substr = (board[testx][testy]).substr(2, 3);
-				if ((substr === 'out') || (substr === 'act')) {
+			testx = xboard + 1; testy = yboard; type = board[testx][testy];
+			if ((type !== 0) && (type !== -1)) {
+				s = type.substr(2, 3);
+				if ((s === 'out') || (s === 'act')) {
 					checkspec( board, testx, testy );
 				}
 			}
-			testx = xboard; 	testy = yboard - 1;
-			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
-				substr = (board[testx][testy]).substr(2, 3);
-				if ((substr === 'out') || (substr === 'act')) {
+			testx = xboard; 	testy = yboard - 1; type = board[testx][testy];
+			if ((type !== 0) && (type !== -1)) {
+				s = type.substr(2, 3);
+				if ((s === 'out') || (s === 'act')) {
 					checkspec( board, testx, testy );
 				}
 			}
-			testx = xboard;		testy = yboard + 1;
-			if ((board[testx][testy] !== 0) && (board[testx][testy] !== -1)) {
-				substr = (board[testx][testy]).substr(2, 3);
-				if ((substr === 'out') || (substr === 'act')) {
+			testx = xboard;		testy = yboard + 1; type = board[testx][testy];
+			if ((type !== 0) && (type !== -1)) {
+				s = type.substr(2, 3);
+				if ((s === 'out') || (s === 'act')) {
 					checkspec( board, testx, testy );
 				}
 			}
 			drawboard();
 		}
 	});
-
-	selpiece = '#spec',
-	$( '#park' ).css( 'border', 'solid 3px white' );
-	$( '#out' ).css( 'border', 'solid 3px black' );
-	$( '#fact' ).css( 'border', 'solid 3px black' );
-
-	$( '#park' ).click( function() {	switchselpiece( '#park' ) } );
-	$( '#out' ).click( function() {		switchselpiece( '#out' ) } );
-	$( '#fact' ).click( function() {	switchselpiece( '#fact' ) } );
 
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
