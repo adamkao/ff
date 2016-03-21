@@ -20,6 +20,18 @@ boardhistory = [];
 spechistory.push( speclist ),
 boardhistory.push( board );
 
+turnorder = [ 'r', 'g', 'b', 'c', 'p' ];
+avail = { r: 6, g: 6, b: 6, c: 6, p: 6 };
+
+function shuffleArray( array ) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
+}
 
 // test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
 function filltest( tempboard, testx, testy, front ) {
@@ -189,6 +201,18 @@ function firstmousemove( e ) {
 
 $( document ).ready( function(){
 	var x, y;
+
+	shuffleArray( turnorder );
+	$( '#turnorder' ).html(
+		"<img id='" + turnorder[0] + "mark' src='" + turnorder[0] + "mark.png'>" +
+		"<img id='" + turnorder[1] + "mark' src='" + turnorder[1] + "mark.png'>" +
+		"<img id='" + turnorder[2] + "mark' src='" + turnorder[2] + "mark.png'>" +
+		"<img id='" + turnorder[3] + "mark' src='" + turnorder[3] + "mark.png'>" +
+		"<img id='" + turnorder[4] + "mark' src='" + turnorder[4] + "mark.png'>"
+		);
+	selpiece = '#' + turnorder[0] + 'mark';
+	$( selpiece ).css( 'border', 'solid 3px black' );
+	$( '#count' ).html( '8 available' );
 
 	x = Math.floor( Math.random() * 5 + 6 );
 	y = Math.floor( Math.random() * 5 + 6 );
