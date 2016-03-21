@@ -1,5 +1,5 @@
 var i = 0, c, ctx,
-selpiece = '#spec',
+selpiece = '#rmark',
 speclist = [],
 spechistory = [],
 board = [
@@ -163,6 +163,30 @@ function switchselpiece( id ) {
 	$( selpiece ).css( 'border', 'solid 3px black' );
 }
 
+function firstmousemove( e ) {
+	var i, j, x, y, xsq, ysq, xboard, yboard;
+	
+	drawboard();
+	for (i = 1; i <= 10; i++) {
+		for (j = 1; j <= 10; j++) {
+			if (board[i][j] === 0) {
+				imgdrawat( '#tar', i, j );
+			}
+		}
+	}
+	x = e.pageX - this.offsetLeft;
+	y = e.pageY - this.offsetTop;
+	xsq = Math.floor( x/50 );
+	ysq = Math.floor( y/50 );
+	xboard = xsq + 1;
+	yboard = ysq + 1;
+	if (board[xboard][yboard] === 0) {
+		imgdrawat( selpiece,
+			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
+			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
+	}
+}
+
 $( document ).ready( function(){
 	var x, y;
 
@@ -179,18 +203,7 @@ $( document ).ready( function(){
 	c = document.getElementById( 'board' );
 	ctx = c.getContext( '2d' );
 
-	$( '#board' ).mousemove( function( e ) {
-		var x, y, xsq, ysq, xdraw, ydraw;
-		x = e.pageX - this.offsetLeft;
-		y = e.pageY - this.offsetTop;
-		xsq = Math.floor( x/50 );
-		ysq = Math.floor( y/50 );
-		xdraw = xsq*50 + 9;
-		ydraw = ysq*50 + 9;
-		drawboard();
-		ctx.fillStyle = '#000080';
-		ctx.fillRect( xdraw, ydraw, 33, 33 );
-	});
+	$( '#board' ).mousemove( firstmousemove );
 	$( '#board' ).mouseleave( function( e ) {
 		drawboard();
 	});
