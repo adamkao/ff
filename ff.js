@@ -2,7 +2,12 @@ var i = 0, c, ctx,
 selpiece = 'rmark',
 speclist = [],
 spechistory = [],
-players = [ ['r', 6], ['g', 5], ['b', 4], ['c', 3], ['p', 2] ],
+rrem = [ 'arout', 'brout', 'crout', 'drout' ],
+grem = [ 'agout', 'bgout', 'cgout', 'dgout' ],
+brem = [ 'about', 'bbout', 'cbout', 'dbout' ],
+crem = [ 'acout', 'bcout', 'ccout', 'dcout' ],
+prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
+players = [ ['r', 6, rrem], ['g', 5, grem], ['b', 4, brem], ['c', 3, crem], ['p', 2, prem] ],
 player,
 playerturn = 0,
 turnorder = [ 0, 1, 2, 3, 4 ],
@@ -21,7 +26,8 @@ board = [
 [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 ],
 boardhistory = [],
-adjlist = [];
+adjlist = [],
+emptyremaining = 96;
 
 spechistory.push( speclist );
 boardhistory.push( board );
@@ -256,6 +262,16 @@ function markmousemove( e ) {
 	}
 }
 
+function pick() {
+	var tile = 'park';
+	var r = Math.floor( Math.random() * emptyremaining );
+	var outletsremaining = players[player][2];
+	if (r < outletsremaining.length) {
+		tile = outletsremaining[r];
+	}
+	$( '#pick' ).html( "<img src='" + tile + ".png'>" );
+}
+
 function place( xboard, yboard ) {
 	var xboard, yboard, testx, testy, type, s;
 
@@ -399,6 +415,7 @@ $( document ).ready( function(){
 		drawboard();
 	});
 	$( '#board' ).click( firstmark );
+	$( '#pickbtn' ).click( pick );
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
 			board = boardhistory.pop();
