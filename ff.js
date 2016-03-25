@@ -20,7 +20,8 @@ board = [
 [ -1, 'afact', 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
 [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
 ],
-boardhistory = [];
+boardhistory = [],
+adjlist = [];
 
 spechistory.push( speclist );
 boardhistory.push( board );
@@ -138,16 +139,51 @@ function checkspec( board, x, y ) {
 	}
 }
 
+function haspieceadjacent( xsq, ysq ) {
+	var np = board[xsq][ysq-1];
+	var ep = board[xsq-1][ysq];
+	var wp = board[xsq+1][ysq];
+	var sp = board[xsq][ysq+1];
+	return (
+		((np !== 0) && (np !== -1)) ||
+		((ep !== 0) && (ep !== -1)) ||
+		((wp !== 0) && (wp !== -1)) ||
+		((sp !== 0) && (sp !== -1))
+		)
+}
+
+function updateadjlist() {
+	var i, j, xsq, ysq;
+
+	adjlist = [];
+	for (i = 1; i <= 10; i++) {
+		for (j = 1; j <= 10; j++) {
+			if ((board[i][j] === 0) && haspieceadjacent( i, j )) {
+				adjlist.push( [i, j] );
+			}
+		}
+	}
+}
+
+function findonlist( list, xsq, ysq ) {
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if ((list[i][0] === xsq) && (list[i][1] === ysq)) return true;
+		}
+	}
+	return false
+}
+
 function imgdrawat( piece, xsq, ysq ){
 	ctx.drawImage( $( piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
 
 function drawboard() {
-	var x, y, xdraw, ydraw;
+	var i, x, y, xdraw, ydraw;
 
 	ctx.clearRect( 0, 0, 501, 501 );
 	ctx.beginPath();
-	for (i=0; i<=10; i++) {
+	for (i = 0; i <= 10; i++) {
 		ctx.moveTo( i*50 + .5, .5 );
 		ctx.lineTo( i*50 + .5, 500.5 );
 		ctx.moveTo( .5, i*50 + .5 );
@@ -158,7 +194,7 @@ function drawboard() {
 	ctx.stroke();
 
 	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
-		for (y = 1, ydraw = 1; y<=10; y++, ydraw += 50) {
+		for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
 			p = board[x][y];
 			if ((p === 0 ) || (p === -1)) {
 				/* do nothing */
@@ -188,6 +224,24 @@ function firstmousemove( e ) {
 				imgdrawat( '#tar', i, j );
 			}
 		}
+	}
+	x = e.pageX - this.offsetLeft;
+	y = e.pageY - this.offsetTop;
+	xsq = Math.floor( x/50 );
+	ysq = Math.floor( y/50 );
+	xboard = xsq + 1;
+	yboard = ysq + 1;
+	if (board[xboard][yboard] === 0) {
+		imgdrawat( '#' + selpiece,
+			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
+			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
+	}
+}
+
+function markmousemove( e ) {
+	drawboard();
+	for (i = 0; i < adjlist.length; i++) {
+		imgdrawat( '#tar', adjlist[i][0], adjlist[i][1] )
 	}
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -250,7 +304,7 @@ function place( xboard, yboard ) {
 	}
 }
 
-function mark( e ) {
+function firstmark( e ) {
 	var x, y, xboard, yboard;
 
 	x = e.pageX - this.offsetLeft;
@@ -263,6 +317,12 @@ function mark( e ) {
 		board[xboard][yboard] = selpiece;	
 	}
 	playerturn++;
+	if (playerturn === 5) {
+		$( '#board' ).off( 'firstmousemove' );
+		$( '#board' ).mousemove( markmousemove );
+		updateadjlist();
+		playerturn = 0;
+	}
 	player = turnorder[playerturn];
 	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
 	selpiece = players[player][0] + 'mark';
@@ -270,6 +330,36 @@ function mark( e ) {
 	$( '#count' ).html( players[player][1] + ' available' );	
 
 	drawboard();
+}
+
+function mark( e ) {
+	var x, y, xboard, yboard;
+
+	x = e.pageX - this.offsetLeft;
+	y = e.pageY - this.offsetTop;
+	xboard = Math.floor( x/50 ) + 1;
+	yboard = Math.floor( y/50 ) + 1;
+
+	if (findonlist( adjlist, xboard, yboard )) {
+		boardhistory.push( board );
+		board = $.extend( true, [], board );
+		board[xboard][yboard] = selpiece;	
+		updateadjlist();
+	}
+	playerturn++;
+	if (playerturn === 5) {
+		playerturn = 0;
+	}
+	player = turnorder[playerturn];
+	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
+	selpiece = players[player][0] + 'mark';
+	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+	$( '#count' ).html( players[player][1] + ' available' );	
+
+	drawboard();
+	for (i = 0; i < adjlist.length; i++) {
+		imgdrawat( '#tar', adjlist[i][0], adjlist[i][1] )
+	}
 }
 
 $( document ).ready( function(){
@@ -304,7 +394,7 @@ $( document ).ready( function(){
 	$( '#board' ).mouseleave( function( e ) {
 		drawboard();
 	});
-	$( '#board' ).click( mark );
+	$( '#board' ).click( firstmark );
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
 			board = boardhistory.pop();
