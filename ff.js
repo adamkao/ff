@@ -316,10 +316,13 @@ function firstmark( e ) {
 		board = $.extend( true, [], board );
 		board[xboard][yboard] = selpiece;	
 	}
+	players[player][1]--;
 	playerturn++;
 	if (playerturn === 5) {
-		$( '#board' ).off( 'firstmousemove' );
+		$( '#board' ).off( 'mousemove' );
 		$( '#board' ).mousemove( markmousemove );
+		$( '#board' ).off( 'click' );
+		$( '#board' ).click( mark );
 		updateadjlist();
 		playerturn = 0;
 	}
@@ -345,16 +348,17 @@ function mark( e ) {
 		board = $.extend( true, [], board );
 		board[xboard][yboard] = selpiece;	
 		updateadjlist();
+		players[player][1]--;
+		playerturn++;
+		if (playerturn === 5) {
+			playerturn = 0;
+		}
+		player = turnorder[playerturn];
+		$( '#' + selpiece ).css( 'border', 'solid 3px white' );
+		selpiece = players[player][0] + 'mark';
+		$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+		$( '#count' ).html( players[player][1] + ' available' );	
 	}
-	playerturn++;
-	if (playerturn === 5) {
-		playerturn = 0;
-	}
-	player = turnorder[playerturn];
-	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
-	selpiece = players[player][0] + 'mark';
-	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
-	$( '#count' ).html( players[player][1] + ' available' );	
 
 	drawboard();
 	for (i = 0; i < adjlist.length; i++) {
