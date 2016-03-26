@@ -273,6 +273,9 @@ function pick() {
 	selpiece = 'park';
 }
 
+function undo() {
+}
+
 function done() {
 	$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
 	$( '#pickbtn' ).click( pick );
@@ -429,14 +432,8 @@ $( document ).ready( function(){
 	});
 	$( '#board' ).click( firstmark );
 	$( '#pickbtn' ).click( pick );
+	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
-	$( '#undo' ).click( function( e ) {
-		if (boardhistory.length > 0) {
-			board = boardhistory.pop();
-			speclist = spechistory.pop();
-			drawboard();
-		}
-	});
 
 	drawboard();
 });
