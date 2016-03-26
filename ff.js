@@ -217,7 +217,6 @@ function drawboard() {
 		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
 	}
 	$( '#turnorder' ).html( turnstr );
-	selpiece = players[player][0] + 'mark';
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
 }
 
@@ -271,6 +270,22 @@ function pick() {
 		tile = outletsremaining[r];
 	}
 	$( '#pick' ).html( "<img src='" + tile + ".png'>" );
+	selpiece = 'park';
+}
+
+function done() {
+	$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
+	$( '#pickbtn' ).click( pick );
+
+	selpiece = players[player][0] + 'mark';
+	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
+	playerturn++;
+	if (playerturn === 5) {
+		playerturn = 0;
+	}
+	player = turnorder[playerturn];
+	selpiece = players[player][0] + 'mark';
+	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
 }
 
 function place( xboard, yboard ) {
@@ -414,6 +429,7 @@ $( document ).ready( function(){
 	});
 	$( '#board' ).click( firstmark );
 	$( '#pickbtn' ).click( pick );
+	$( '#done' ).click( done );
 	$( '#undo' ).click( function( e ) {
 		if (boardhistory.length > 0) {
 			board = boardhistory.pop();
