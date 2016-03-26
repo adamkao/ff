@@ -2,6 +2,7 @@ var i = 0, c, ctx,
 selpiece = 'rmark',
 speclist = [],
 spechistory = [],
+action = 'mark',
 rrem = [ 'arout', 'brout', 'crout', 'drout' ],
 grem = [ 'agout', 'bgout', 'cgout', 'dgout' ],
 brem = [ 'about', 'bbout', 'cbout', 'dbout' ],
@@ -9,6 +10,7 @@ crem = [ 'acout', 'bcout', 'ccout', 'dcout' ],
 prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
 players = [ ['r', 6, rrem], ['g', 5, grem], ['b', 4, brem], ['c', 3, crem], ['p', 2, prem] ],
 player,
+turn = 1,
 playerturn = 0,
 turnorder = [ 0, 1, 2, 3, 4 ],
 board = [
@@ -269,6 +271,7 @@ function pick() {
 	if (r < outletsremaining.length) {
 		tile = outletsremaining[r];
 	}
+	action = 'pick';
 	$( '#pick' ).html( "<img src='" + tile + ".png'>" );
 	selpiece = 'park';
 }
@@ -277,18 +280,16 @@ function undo() {
 }
 
 function done() {
-	$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
-	$( '#pickbtn' ).click( pick );
-
 	selpiece = players[player][0] + 'mark';
 	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
-	playerturn++;
-	if (playerturn === 5) {
-		playerturn = 0;
+	if (action === 'mark') {
+		players[player][1]--;
+	} else if (action === 'pick') {
+		console.log( 'TODO: place tile' );
+	} else {
+		console.log( 'ERROR: invalid action' );
 	}
-	player = turnorder[playerturn];
-	selpiece = players[player][0] + 'mark';
-	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+	nextplayer();
 }
 
 function place( xboard, yboard ) {
@@ -339,37 +340,26 @@ function place( xboard, yboard ) {
 	}
 }
 
-function firstmark( e ) {
-	var x, y, xboard, yboard;
 
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xboard = Math.floor( x/50 ) + 1;
-	yboard = Math.floor( y/50 ) + 1;
-	if (board[xboard][yboard] === 0) {
-		boardhistory.push( board );
-		board = $.extend( true, [], board );
-		board[xboard][yboard] = selpiece;	
-	}
-	players[player][1]--;
+function nextplayer() {
 	playerturn++;
 	if (playerturn === 5) {
-		$( '#board' ).off( 'mousemove' );
-		$( '#board' ).mousemove( markmousemove );
-		$( '#board' ).off( 'click' );
-		$( '#board' ).click( mark );
-		updateadjlist();
 		playerturn = 0;
 	}
 	player = turnorder[playerturn];
-	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
 	selpiece = players[player][0] + 'mark';
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
-
-	drawboard();
+	if (players[player][1]) {
+		action = 'mark';
+		$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
+		$( '#pickbtn' ).click( pick );
+	} else {
+		action = 'pick';
+		pick();
+	}
 }
 
-function mark( e ) {
+function click( e ) {
 	var x, y, xboard, yboard;
 
 	x = e.pageX - this.offsetLeft;
@@ -377,26 +367,51 @@ function mark( e ) {
 	xboard = Math.floor( x/50 ) + 1;
 	yboard = Math.floor( y/50 ) + 1;
 
-	if (findonlist( adjlist, xboard, yboard )) {
-		boardhistory.push( board );
-		board = $.extend( true, [], board );
-		board[xboard][yboard] = selpiece;	
-		updateadjlist();
+	if (turn === 1) {
+		if (board[xboard][yboard] === 0) {
+			boardhistory.push( board );
+			board = $.extend( true, [], board );
+			board[xboard][yboard] = selpiece;	
+		}
 		players[player][1]--;
 		playerturn++;
 		if (playerturn === 5) {
+			turn++;
 			playerturn = 0;
+			$( '#board' ).off( 'mousemove' );		
+			$( '#board' ).mousemove( markmousemove );
+			updateadjlist();
 		}
 		player = turnorder[playerturn];
 		$( '#' + selpiece ).css( 'border', 'solid 3px white' );
 		selpiece = players[player][0] + 'mark';
 		$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+		drawboard();
+		return;
 	}
-
+	if (action === 'mark') {
+		if (findonlist( adjlist, xboard, yboard )) {
+			boardhistory.push( board );
+			board = $.extend( true, [], board );
+			board[xboard][yboard] = selpiece;	
+			if (players[player][1]) {
+				players[player][1]--;
+			} else {
+				console.log( 'tried to mark with none left' );
+			}
+			nextplayer();
+		}
+		updateadjlist();
+		drawboard();
+		for (i = 0; i < adjlist.length; i++) {
+			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+		}
+	} else if (action === 'pick') {
+		console.log( 'TODO: place a tile' );
+	} else {
+		console.log( 'invalid action');
+	}
 	drawboard();
-	for (i = 0; i < adjlist.length; i++) {
-		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
-	}
 }
 
 $( document ).ready( function(){
@@ -430,7 +445,7 @@ $( document ).ready( function(){
 	$( '#board' ).mouseleave( function( e ) {
 		drawboard();
 	});
-	$( '#board' ).click( firstmark );
+	$( '#board' ).click( click );
 	$( '#pickbtn' ).click( pick );
 	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
