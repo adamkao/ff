@@ -181,11 +181,11 @@ function findonlist( list, xsq, ysq ) {
 }
 
 function imgdrawat( piece, xsq, ysq ){
-	ctx.drawImage( $( piece )[0], xsq*50 - 45 , ysq*50 - 45 )
+	ctx.drawImage( $( '#' + piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
 
 function drawboard() {
-	var i, x, y, xdraw, ydraw;
+	var i, x, y, xdraw, ydraw, playermark, turnstr = '';;
 
 	ctx.clearRect( 0, 0, 501, 501 );
 	ctx.beginPath();
@@ -208,16 +208,17 @@ function drawboard() {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );
 			} else {
-				imgdrawat( '#' + p, x, y );
+				imgdrawat( p, x, y );
 			}
 		}
 	}
-}
-
-function switchselpiece( id ) {
-	$( selpiece ).css( 'border', 'solid 3px white' );
-	selpiece = id;
-	$( selpiece ).css( 'border', 'solid 3px black' );
+	for (i = 0; i < 5; i++ ) {
+		playermark = players[turnorder[i]][0] + 'mark';
+		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
+	}
+	$( '#turnorder' ).html( turnstr );
+	selpiece = players[player][0] + 'mark';
+	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
 }
 
 function firstmousemove( e ) {
@@ -227,7 +228,7 @@ function firstmousemove( e ) {
 	for (i = 1; i <= 10; i++) {
 		for (j = 1; j <= 10; j++) {
 			if (board[i][j] === 0) {
-				imgdrawat( '#tar', i, j );
+				imgdrawat( 'tar', i, j );
 			}
 		}
 	}
@@ -238,7 +239,7 @@ function firstmousemove( e ) {
 	xboard = xsq + 1;
 	yboard = ysq + 1;
 	if (board[xboard][yboard] === 0) {
-		imgdrawat( '#' + selpiece,
+		imgdrawat( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
 	}
@@ -247,7 +248,7 @@ function firstmousemove( e ) {
 function markmousemove( e ) {
 	drawboard();
 	for (i = 0; i < adjlist.length; i++) {
-		imgdrawat( '#tar', adjlist[i][0], adjlist[i][1] )
+		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 	}
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -256,7 +257,7 @@ function markmousemove( e ) {
 	xboard = xsq + 1;
 	yboard = ysq + 1;
 	if (board[xboard][yboard] === 0) {
-		imgdrawat( '#' + selpiece,
+		imgdrawat( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
 	}
@@ -346,7 +347,6 @@ function firstmark( e ) {
 	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
 	selpiece = players[player][0] + 'mark';
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
-	$( '#count' ).html( players[player][1] + ' available' );	
 
 	drawboard();
 }
@@ -373,12 +373,11 @@ function mark( e ) {
 		$( '#' + selpiece ).css( 'border', 'solid 3px white' );
 		selpiece = players[player][0] + 'mark';
 		$( '#' + selpiece ).css( 'border', 'solid 3px black' );
-		$( '#count' ).html( players[player][1] + ' available' );	
 	}
 
 	drawboard();
 	for (i = 0; i < adjlist.length; i++) {
-		imgdrawat( '#tar', adjlist[i][0], adjlist[i][1] )
+		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 	}
 }
 
@@ -388,14 +387,13 @@ $( document ).ready( function(){
 	shuffleArray( turnorder );
 	for (i = 0; i < 5; i++ ) {
 		playermark = players[turnorder[i]][0] + 'mark';
-		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>"
+		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
 	}
 	$( '#turnorder' ).html( turnstr );
 
 	player = turnorder[0];
 	selpiece = players[player][0] + 'mark';
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
-	$( '#count' ).html( players[player][1] + ' available' );
 
 	x = Math.floor( Math.random() * 5 + 6 );
 	y = Math.floor( Math.random() * 5 + 6 );
