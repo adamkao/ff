@@ -226,6 +226,17 @@ function firstmousemove( e ) {
 	var i, j, x, y, xsq, ysq, xboard, yboard;
 	
 	drawboard();
+	x = e.pageX - this.offsetLeft;
+	y = e.pageY - this.offsetTop;
+	xsq = Math.floor( x/50 );
+	ysq = Math.floor( y/50 );
+	xboard = xsq + 1;
+	yboard = ysq + 1;
+	if (board[xboard][yboard] === 0) {
+		imgdrawat( selpiece,
+			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
+			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
+	}
 	for (i = 1; i <= 10; i++) {
 		for (j = 1; j <= 10; j++) {
 			if (board[i][j] === 0) {
@@ -233,34 +244,26 @@ function firstmousemove( e ) {
 			}
 		}
 	}
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xsq = Math.floor( x/50 );
-	ysq = Math.floor( y/50 );
-	xboard = xsq + 1;
-	yboard = ysq + 1;
-	if (board[xboard][yboard] === 0) {
-		imgdrawat( selpiece,
-			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
-			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
-	}
 }
 
 function markmousemove( e ) {
-	drawboard();
-	for (i = 0; i < adjlist.length; i++) {
-		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
-	}
+	var x, y, xsq, ysq, xboard, yboard;
+
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
 	xsq = Math.floor( x/50 );
 	ysq = Math.floor( y/50 );
 	xboard = xsq + 1;
 	yboard = ysq + 1;
+
+	drawboard();
 	if (board[xboard][yboard] === 0) {
 		imgdrawat( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
+	}
+	for (i = 0; i < adjlist.length; i++) {
+		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 	}
 }
 
