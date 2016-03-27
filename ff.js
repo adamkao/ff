@@ -1,14 +1,26 @@
 var i = 0, c, ctx,
 selpiece = 'rmark',
+playerpiece = 'rmark',
 speclist = [],
 spechistory = [],
 action = 'mark',
 rrem = [ 'arout', 'brout', 'crout', 'drout' ],
+rtargetlist = [],
 grem = [ 'agout', 'bgout', 'cgout', 'dgout' ],
+gtargetlist = [],
 brem = [ 'about', 'bbout', 'cbout', 'dbout' ],
+btargetlist = [],
 crem = [ 'acout', 'bcout', 'ccout', 'dcout' ],
+ctargetlist = [],
 prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
-players = [ ['r', 6, rrem], ['g', 5, grem], ['b', 4, brem], ['c', 3, crem], ['p', 2, prem] ],
+ptargetlist = [],
+players = [
+['r', 6, rrem, rtargetlist],
+['g', 5, grem, gtargetlist],
+['b', 4, brem, btargetlist],
+['c', 3, crem, ctargetlist],
+['p', 2, prem, ptargetlist]
+],
 player,
 turn = 1,
 playerturn = 0,
@@ -219,7 +231,7 @@ function drawboard() {
 		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
 	}
 	$( '#turnorder' ).html( turnstr );
-	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
 }
 
 function firstmousemove( e ) {
@@ -246,8 +258,8 @@ function firstmousemove( e ) {
 	}
 }
 
-function markmousemove( e ) {
-	var x, y, xsq, ysq, xboard, yboard;
+function mousemove( e ) {
+	var i, x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
 
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -255,15 +267,25 @@ function markmousemove( e ) {
 	ysq = Math.floor( y/50 );
 	xboard = xsq + 1;
 	yboard = ysq + 1;
+	at = board[xboard][yboard];
 
 	drawboard();
-	if (board[xboard][yboard] === 0) {
+	if ((at === 0) || ((at !== -1) && (at.substr( 1, 5 )) === 'mark')) {
 		imgdrawat( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
 	}
-	for (i = 0; i < adjlist.length; i++) {
-		imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+	if (action === 'mark') {
+		for (i = 0; i < adjlist.length; i++) {
+			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+		}
+	} else if (action === 'pick') {
+		targetlist = players[player][3];
+		for (i = 0; i < targetlist.length; i++) {
+			imgdrawat( 'picktar', targetlist[i][0], targetlist[i][1] )
+		}
+	} else {
+		console.log( 'ERROR: invalid action' );
 	}
 }
 
@@ -284,7 +306,8 @@ function undo() {
 
 function done() {
 	selpiece = players[player][0] + 'mark';
-	$( '#' + selpiece ).css( 'border', 'solid 3px white' );
+	playerpiece = selpiece;
+	$( '#' + playerpiece ).css( 'border', 'solid 3px white' );
 	if (action === 'mark') {
 		players[player][1]--;
 	} else if (action === 'pick') {
@@ -351,7 +374,8 @@ function nextplayer() {
 	}
 	player = turnorder[playerturn];
 	selpiece = players[player][0] + 'mark';
-	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+	playerpiece = selpiece;
+	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
 	if (players[player][1]) {
 		action = 'mark';
 		$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
@@ -377,18 +401,20 @@ function click( e ) {
 			board[xboard][yboard] = selpiece;	
 		}
 		players[player][1]--;
+		players[player][3].push( [xboard, yboard] );
 		playerturn++;
 		if (playerturn === 5) {
 			turn++;
 			playerturn = 0;
 			$( '#board' ).off( 'mousemove' );		
-			$( '#board' ).mousemove( markmousemove );
+			$( '#board' ).mousemove( mousemove );
 			updateadjlist();
 		}
 		player = turnorder[playerturn];
-		$( '#' + selpiece ).css( 'border', 'solid 3px white' );
+		$( '#' + playerpiece ).css( 'border', 'solid 3px white' );
 		selpiece = players[player][0] + 'mark';
-		$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+		playerpiece = selpiece;
+		$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
 		drawboard();
 		return;
 	}
@@ -398,6 +424,7 @@ function click( e ) {
 			board = $.extend( true, [], board );
 			board[xboard][yboard] = selpiece;	
 			if (players[player][1]) {
+				players[player][3].push( [xboard, yboard] );
 				players[player][1]--;
 			} else {
 				console.log( 'tried to mark with none left' );
@@ -410,6 +437,7 @@ function click( e ) {
 			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 		}
 	} else if (action === 'pick') {
+
 		console.log( 'TODO: place a tile' );
 	} else {
 		console.log( 'invalid action');
@@ -429,6 +457,7 @@ $( document ).ready( function(){
 
 	player = turnorder[0];
 	selpiece = players[player][0] + 'mark';
+	playerpiece = selpiece;
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
 
 	x = Math.floor( Math.random() * 5 + 6 );
