@@ -169,25 +169,71 @@ function findroads( board ) {
 	updateadjlist();
 }
 
+function hasmarker( at ) {
+	if (at === 0) {
+		return false;
+	} else if (at === -1) {
+		return false;
+	} else if (at.substring( 1, 5 ) === 'mark') {
+		return true;
+	} else {
+		return false;
+	}
+}
+
 function checkspec( board, x, y ) {
-	var	adjcount = (
-		((board[x - 1][y] !== 'road') && (board[x - 1][y] !== 0))
-		+ ((board[x + 1][y] !== 'road') && (board[x + 1][y] !== 0))
-		+ ((board[x][y - 1] !== 'road') && (board[x][y - 1] !== 0))
-		+ ((board[x][y + 1] !== 'road') && (board[x][y + 1] !== 0))
+	var	adjcount, nadj, eadj, wadj, sadj;
+
+	nadj = board[x][y - 1];
+	eadj = board[x + 1][y];
+	wadj = board[x - 1][y];
+	sadj = board[x][y + 1];
+
+	adjcount = (
+		(((nadj !== 'road') && (nadj !== 0)) && !hasmarker( nadj ))
+		+ (((eadj !== 'road') && (eadj !== 0)) && !hasmarker( eadj ))
+		+ (((wadj !== 'road') && (wadj !== 0)) && !hasmarker( wadj ))
+		+ (((sadj !== 'road') && (sadj !== 0)) && !hasmarker( sadj ))
 		);
 
 	if (adjcount === 3) {
-		if (board[x - 1][y] === 0) {
-			board[x - 1][y] = 'road';
-		} else if (board[x + 1][y] === 0) {
-			board[x + 1][y] = 'road';
-		} else if (board[x][y - 1] === 0) {
+		if ((nadj === 0) || hasmarker( nadj )) {
 			board[x][y - 1] = 'road';
-		} else {
+			for (i = 0; i < 5; i++) {
+				if (findonlist( players[i][3], x, y - 1 )) {
+					players[i][3] = removefromlist( players[i][3], x, y - 1 );
+					players[i][1]++
+				}
+			}
+		} else if ((eadj === 0) || hasmarker( eadj )) {
+			board[x + 1][y] = 'road';
+			for (i = 0; i < 5; i++) {
+				if (findonlist( players[i][3], x + 1, y )) {
+					players[i][3] = removefromlist( players[i][3], x + 1, y );
+					players[i][1]++
+				}
+			}
+		} else if ((wadj === 0) || hasmarker( wadj )) {
+			board[x - 1][y] = 'road';
+			for (i = 0; i < 5; i++) {
+				if (findonlist( players[i][3], x - 1, y )) {
+					players[i][3] = removefromlist( players[i][3], x - 1, y );
+					players[i][1]++
+				}
+			}
+		} else if ((sadj === 0) || hasmarker( sadj )) {
 			board[x][y + 1] = 'road';
+			for (i = 0; i < 5; i++) {
+				if (findonlist( players[i][3], x, y + 1 )) {
+					players[i][3] = removefromlist( players[i][3], x, y + 1 );
+					players[i][1]++
+				}
+			}
+		} else {
+			console.log( 'ERROR: impossible case in checkspec' );
 		}
 	}
+	updateadjlist();
 }
 
 function haspieceadjacent( xsq, ysq ) {
@@ -362,7 +408,7 @@ function place( xboard, yboard ) {
 	testy = yboard;
 	type = board[testx][testy];
 	if ((type !== 0) && (type !== -1)) {
-		s = type.substr(2, 3);
+		s = type.substring( 2, 5 );
 		if ((s === 'out') || (s === 'act')) {
 			checkspec( board, testx, testy );
 		}
@@ -371,7 +417,7 @@ function place( xboard, yboard ) {
 	testy = yboard;
 	type = board[testx][testy];
 	if ((type !== 0) && (type !== -1)) {
-		s = type.substr(2, 3);
+		s = type.substring( 2, 5 );
 		if ((s === 'out') || (s === 'act')) {
 			checkspec( board, testx, testy );
 		}
@@ -380,7 +426,7 @@ function place( xboard, yboard ) {
 	testy = yboard - 1;
 	type = board[testx][testy];
 	if ((type !== 0) && (type !== -1)) {
-		s = type.substr(2, 3);
+		s = type.substring( 2, 5 );
 		if ((s === 'out') || (s === 'act')) {
 			checkspec( board, testx, testy );
 		}
@@ -389,7 +435,7 @@ function place( xboard, yboard ) {
 	testy = yboard + 1;
 	type = board[testx][testy];
 	if ((type !== 0) && (type !== -1)) {
-		s = type.substr(2, 3);
+		s = type.substr( 2, 5 );
 		if ((s === 'out') || (s === 'act')) {
 			checkspec( board, testx, testy );
 		}
