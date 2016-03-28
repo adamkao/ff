@@ -461,15 +461,20 @@ function nextplayer() {
 	playerturn++;
 	if (playerturn === 5) {
 		playerturn = 0;
+		turn++;
 	}
 	player = turnorder[playerturn];
 	selpiece = players[player][0] + 'mark';
 	playerpiece = selpiece;
 	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
-	if ((players[player][1]) && adjlist) {
+	if (players[player][1]) {
 		action = 'mark';
-		$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
-		$( '#pickbtn' ).click( pick );
+		if (players[player][3].length) {
+			$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
+			$( '#pickbtn' ).click( pick );			
+		} else {
+			$( '#pick' ).html( 'foo' );	
+		}
 	} else if (adjlist) {
 		action = 'pick';
 		pick();
@@ -492,22 +497,15 @@ function click( e ) {
 			boardhistory.push( board );
 			board = $.extend( true, [], board );
 			board[xboard][yboard] = selpiece;	
+			players[player][3].push( [xboard, yboard] );
+			players[player][1]--;
 		}
-		players[player][1]--;
-		players[player][3].push( [xboard, yboard] );
-		playerturn++;
-		if (playerturn === 5) {
-			turn++;
-			playerturn = 0;
+		nextplayer();
+		if (turn === 2) {
 			$( '#board' ).off( 'mousemove' );		
 			$( '#board' ).mousemove( mousemove );
 			updateadjlist();
 		}
-		player = turnorder[playerturn];
-		$( '#' + playerpiece ).css( 'border', 'solid 3px white' );
-		selpiece = players[player][0] + 'mark';
-		playerpiece = selpiece;
-		$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
 		drawboard();
 		return;
 	}
@@ -522,10 +520,7 @@ function click( e ) {
 			} else {
 				console.log( 'tried to mark with none left' );
 			}
-			nextplayer();
 		}
-		updateadjlist();
-		drawboard();
 		for (i = 0; i < adjlist.length; i++) {
 			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 		}
@@ -537,10 +532,11 @@ function click( e ) {
 		place( xboard, yboard );
 		players[player][3] = removefromlist( players[player][3], xboard, yboard );
 		players[player][1]++;
-		nextplayer();
 	} else {
 		console.log( 'invalid action');
 	}
+	nextplayer();
+	updateadjlist();
 	drawboard();
 }
 
@@ -579,7 +575,7 @@ $( document ).ready( function(){
 		drawboard();
 	});
 	$( '#board' ).click( click );
-	$( '#pickbtn' ).click( pick );
+	$( '#pick' ).html( '' );	
 	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
 
