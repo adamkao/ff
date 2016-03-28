@@ -16,10 +16,10 @@ prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
 ptargetlist = [],
 players = [
 ['r', 6, rrem, rtargetlist],
-['g', 5, grem, gtargetlist],
-['b', 4, brem, btargetlist],
-['c', 3, crem, ctargetlist],
-['p', 2, prem, ptargetlist]
+['g', 6, grem, gtargetlist],
+['b', 6, brem, btargetlist],
+['c', 6, crem, ctargetlist],
+['p', 6, prem, ptargetlist]
 ],
 player,
 turn = 1,
@@ -135,6 +135,21 @@ function findroads( board ) {
 			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
+					if (findonlist( rtargetlist, x, y )) {
+						players[0][1]++
+					}
+					if (findonlist( gtargetlist, x, y )) {
+						players[1][1]++
+					}
+					if (findonlist( btargetlist, x, y )) {
+						players[2][1]++
+					}
+					if (findonlist( ctargetlist, x, y )) {
+						players[3][1]++
+					}
+					if (findonlist( ptargetlist, x, y )) {
+						players[4][1]++
+					}
 				}
 			}
 		}
@@ -455,6 +470,7 @@ function click( e ) {
 			return;
 		}
 		place( xboard, yboard );
+		players[player][1]++;
 		nextplayer();
 	} else {
 		console.log( 'invalid action');
