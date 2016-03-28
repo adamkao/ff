@@ -5,21 +5,16 @@ speclist = [],
 spechistory = [],
 action = 'mark',
 rrem = [ 'arout', 'brout', 'crout', 'drout' ],
-rtargetlist = [],
 grem = [ 'agout', 'bgout', 'cgout', 'dgout' ],
-gtargetlist = [],
 brem = [ 'about', 'bbout', 'cbout', 'dbout' ],
-btargetlist = [],
 crem = [ 'acout', 'bcout', 'ccout', 'dcout' ],
-ctargetlist = [],
 prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
-ptargetlist = [],
 players = [
-['r', 6, rrem, rtargetlist],
-['g', 6, grem, gtargetlist],
-['b', 6, brem, btargetlist],
-['c', 6, crem, ctargetlist],
-['p', 6, prem, ptargetlist]
+['r', 6, rrem, []],
+['g', 6, grem, []],
+['b', 6, brem, []],
+['c', 6, crem, []],
+['p', 6, prem, []]
 ],
 player,
 turn = 1,
@@ -48,13 +43,39 @@ boardhistory.push( board );
 
 
 function shuffleArray( array ) {
-    for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-    return array;
+	for (var i = array.length - 1; i > 0; i--) {
+		var j = Math.floor(Math.random() * (i + 1));
+		var temp = array[i];
+		array[i] = array[j];
+		array[j] = temp;
+	}
+	return array;
+}
+
+function findonlist( list, xsq, ysq ) {
+	var i = 0;
+
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
+				return true;
+			}
+		}
+	}
+	return false
+}
+
+function removefromlist( list, xsq, ysq ) {
+	var i = 0, ret = [];
+
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
+				ret.push( [list[i][0], list[i][1]] );
+			};
+		}
+	}
+	return ret;
 }
 
 // test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
@@ -128,32 +149,24 @@ function testroad( x, y ) {
 }
 
 function findroads( board ) {
-	var x, y;
+	var i = 0, x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
 			at = board[x][y];
 			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
-					if (findonlist( rtargetlist, x, y )) {
-						players[0][1]++
-					}
-					if (findonlist( gtargetlist, x, y )) {
-						players[1][1]++
-					}
-					if (findonlist( btargetlist, x, y )) {
-						players[2][1]++
-					}
-					if (findonlist( ctargetlist, x, y )) {
-						players[3][1]++
-					}
-					if (findonlist( ptargetlist, x, y )) {
-						players[4][1]++
+					for (i = 0; i < 5; i++) {
+						if (findonlist( players[i][3], x, y )) {
+							players[i][3] = removefromlist( players[i][3], x, y );
+							players[i][1]++
+						}
 					}
 				}
 			}
 		}
 	}
+	updateadjlist();
 }
 
 function checkspec( board, x, y ) {
@@ -203,15 +216,6 @@ function updateadjlist() {
 	}
 }
 
-function findonlist( list, xsq, ysq ) {
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if ((list[i][0] === xsq) && (list[i][1] === ysq)) return true;
-		}
-	}
-	return false
-}
-
 function imgdrawat( piece, xsq, ysq ){
 	ctx.drawImage( $( '#' + piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
@@ -254,7 +258,7 @@ function drawboard() {
 
 function firstmousemove( e ) {
 	var i, j, x, y, xsq, ysq, xboard, yboard;
-	
+
 	drawboard();
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -470,6 +474,7 @@ function click( e ) {
 			return;
 		}
 		place( xboard, yboard );
+		players[player][3] = removefromlist( players[player][3], xboard, yboard );
 		players[player][1]++;
 		nextplayer();
 	} else {
