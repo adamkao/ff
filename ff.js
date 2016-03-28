@@ -466,13 +466,16 @@ function nextplayer() {
 	selpiece = players[player][0] + 'mark';
 	playerpiece = selpiece;
 	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
-	if (players[player][1]) {
+	if ((players[player][1]) && adjlist) {
 		action = 'mark';
 		$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
 		$( '#pickbtn' ).click( pick );
-	} else {
+	} else if (adjlist) {
 		action = 'pick';
 		pick();
+	} else {
+		nextplayer();
+		console.log( 'TODO: check for end of game' );
 	}
 }
 
