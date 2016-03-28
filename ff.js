@@ -4,17 +4,12 @@ playerpiece = 'rmark',
 speclist = [],
 spechistory = [],
 action = 'mark',
-rrem = [ 'arout', 'brout', 'crout', 'drout' ],
-grem = [ 'agout', 'bgout', 'cgout', 'dgout' ],
-brem = [ 'about', 'bbout', 'cbout', 'dbout' ],
-crem = [ 'acout', 'bcout', 'ccout', 'dcout' ],
-prem = [ 'apout', 'bpout', 'cpout', 'dpout' ],
 players = [
-['r', 6, rrem, []],
-['g', 6, grem, []],
-['b', 6, brem, []],
-['c', 6, crem, []],
-['p', 6, prem, []]
+[ 'r', 6, [ 'arout', 'brout', 'crout', 'drout' ], [] ],
+[ 'g', 6, [ 'agout', 'bgout', 'cgout', 'dgout' ], [] ],
+[ 'b', 6, [ 'about', 'bbout', 'cbout', 'dbout' ], [] ],
+[ 'c', 6, [ 'acout', 'bcout', 'ccout', 'dcout' ], [] ],
+[ 'p', 6, [ 'apout', 'bpout', 'cpout', 'dpout' ], [] ]
 ],
 player,
 turn = 1,
@@ -72,6 +67,19 @@ function removefromlist( list, xsq, ysq ) {
 		for (i = 0; i < list.length; i++) {
 			if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
 				ret.push( [list[i][0], list[i][1]] );
+			};
+		}
+	}
+	return ret;
+}
+
+function removeNameFromList( list, name ) {
+	var i = 0, ret = [];
+
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if (list[i] !== name) {
+				ret.push( name );
 			};
 		}
 	}
@@ -156,6 +164,7 @@ function findroads( board ) {
 			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
+					emptyremaining--;					
 					for (i = 0; i < 5; i++) {
 						if (findonlist( players[i][3], x, y )) {
 							players[i][3] = removefromlist( players[i][3], x, y );
@@ -199,6 +208,7 @@ function checkspec( board, x, y ) {
 	if (adjcount === 3) {
 		if ((nadj === 0) || hasmarker( nadj )) {
 			board[x][y - 1] = 'road';
+			emptyremaining--;			
 			for (i = 0; i < 5; i++) {
 				if (findonlist( players[i][3], x, y - 1 )) {
 					players[i][3] = removefromlist( players[i][3], x, y - 1 );
@@ -207,6 +217,7 @@ function checkspec( board, x, y ) {
 			}
 		} else if ((eadj === 0) || hasmarker( eadj )) {
 			board[x + 1][y] = 'road';
+			emptyremaining--;
 			for (i = 0; i < 5; i++) {
 				if (findonlist( players[i][3], x + 1, y )) {
 					players[i][3] = removefromlist( players[i][3], x + 1, y );
@@ -215,6 +226,7 @@ function checkspec( board, x, y ) {
 			}
 		} else if ((wadj === 0) || hasmarker( wadj )) {
 			board[x - 1][y] = 'road';
+			emptyremaining--;
 			for (i = 0; i < 5; i++) {
 				if (findonlist( players[i][3], x - 1, y )) {
 					players[i][3] = removefromlist( players[i][3], x - 1, y );
@@ -223,6 +235,7 @@ function checkspec( board, x, y ) {
 			}
 		} else if ((sadj === 0) || hasmarker( sadj )) {
 			board[x][y + 1] = 'road';
+			emptyremaining--;
 			for (i = 0; i < 5; i++) {
 				if (findonlist( players[i][3], x, y + 1 )) {
 					players[i][3] = removefromlist( players[i][3], x, y + 1 );
@@ -366,7 +379,7 @@ function pick() {
 	}
 	action = 'pick';
 	$( '#pick' ).html( "<img src='" + tile + ".png'>" );
-	selpiece = 'park';
+	selpiece = tile;
 }
 
 function undo() {
@@ -394,11 +407,10 @@ function place( xboard, yboard ) {
 
 	if (selpiece === 'park') {
 		board[xboard][yboard] = 'park';
-	} else if (selpiece === 'out') {
-		board[xboard][yboard] = 'out';
-		checkspec( board, xboard, yboard );
-	} else if (selpiece === 'fact') {
-		board[xboard][yboard] = 'fact';
+		emptyremaining--;
+	} else if (selpiece.substring( 2, 5 ) === 'out') {
+		board[xboard][yboard] = selpiece;
+		emptyremaining--;
 		checkspec( board, xboard, yboard );
 	}
 
