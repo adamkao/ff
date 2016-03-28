@@ -60,8 +60,9 @@ function shuffleArray( array ) {
 // test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
 function filltest( tempboard, testx, testy, front ) {
 	var testpt;
+	var at = tempboard[testx][testy];
 
-	if ((tempboard[testx][testy] === 0) || (tempboard[testx][testy] === 'road')) {
+	if ((at === 0) || (at === 'road') || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 		tempboard[testx][testy] = 'fill';
 		testpt = new Object();
 		testpt.x = testx;
@@ -95,10 +96,11 @@ function flood( tempboard, x, y ) {
 
 // find an empty square
 function findempty( bd, pt ) {
-	var x, y;
+	var x, y, at;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
-			if ((bd[x][y] === 0) || (bd[x][y] === 'road')) {
+			at = bd[x][y];
+			if ((at === 0) || (at === 'road') || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				pt.x = x;
 				pt.y = y;
 				return;
@@ -129,7 +131,8 @@ function findroads( board ) {
 	var x, y;
 	for (x = 1; x <= 10; x++) {
 		for (y = 1; y <= 10; y++) {
-			if (board[x][y] === 0) {
+			at = board[x][y];
+			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
 				}
@@ -321,49 +324,59 @@ function done() {
 function place( xboard, yboard ) {
 	var xboard, yboard, testx, testy, type, s;
 
-	if (board[xboard][yboard] === 0) {
-		boardhistory.push( board );
-		board = $.extend( true, [], board );
-		if (selpiece === 'park') {
-			board[xboard][yboard] = 'park';
-		} else if (selpiece === 'out') {
-			board[xboard][yboard] = 'out';
-			checkspec( board, xboard, yboard );
-		} else if (selpiece === 'fact') {
-			board[xboard][yboard] = 'fact';
-			checkspec( board, xboard, yboard );
-		}
-		findroads( board );
-		testx = xboard - 1; testy = yboard; type = board[testx][testy];
-		if ((type !== 0) && (type !== -1)) {
-			s = type.substr(2, 3);
-			if ((s === 'out') || (s === 'act')) {
-				checkspec( board, testx, testy );
-			}
-		}
-		testx = xboard + 1; testy = yboard; type = board[testx][testy];
-		if ((type !== 0) && (type !== -1)) {
-			s = type.substr(2, 3);
-			if ((s === 'out') || (s === 'act')) {
-				checkspec( board, testx, testy );
-			}
-		}
-		testx = xboard; 	testy = yboard - 1; type = board[testx][testy];
-		if ((type !== 0) && (type !== -1)) {
-			s = type.substr(2, 3);
-			if ((s === 'out') || (s === 'act')) {
-				checkspec( board, testx, testy );
-			}
-		}
-		testx = xboard;		testy = yboard + 1; type = board[testx][testy];
-		if ((type !== 0) && (type !== -1)) {
-			s = type.substr(2, 3);
-			if ((s === 'out') || (s === 'act')) {
-				checkspec( board, testx, testy );
-			}
-		}
-		drawboard();	
+	boardhistory.push( board );
+	board = $.extend( true, [], board );
+
+	if (selpiece === 'park') {
+		board[xboard][yboard] = 'park';
+	} else if (selpiece === 'out') {
+		board[xboard][yboard] = 'out';
+		checkspec( board, xboard, yboard );
+	} else if (selpiece === 'fact') {
+		board[xboard][yboard] = 'fact';
+		checkspec( board, xboard, yboard );
 	}
+
+	findroads( board );
+
+	testx = xboard - 1;
+	testy = yboard;
+	type = board[testx][testy];
+	if ((type !== 0) && (type !== -1)) {
+		s = type.substr(2, 3);
+		if ((s === 'out') || (s === 'act')) {
+			checkspec( board, testx, testy );
+		}
+	}
+	testx = xboard + 1;
+	testy = yboard;
+	type = board[testx][testy];
+	if ((type !== 0) && (type !== -1)) {
+		s = type.substr(2, 3);
+		if ((s === 'out') || (s === 'act')) {
+			checkspec( board, testx, testy );
+		}
+	}
+	testx = xboard;
+	testy = yboard - 1;
+	type = board[testx][testy];
+	if ((type !== 0) && (type !== -1)) {
+		s = type.substr(2, 3);
+		if ((s === 'out') || (s === 'act')) {
+			checkspec( board, testx, testy );
+		}
+	}
+	testx = xboard;
+	testy = yboard + 1;
+	type = board[testx][testy];
+	if ((type !== 0) && (type !== -1)) {
+		s = type.substr(2, 3);
+		if ((s === 'out') || (s === 'act')) {
+			checkspec( board, testx, testy );
+		}
+	}
+
+	drawboard();	
 }
 
 
@@ -387,7 +400,7 @@ function nextplayer() {
 }
 
 function click( e ) {
-	var x, y, xboard, yboard;
+	var x, y, xboard, yboard, targetlist = [];
 
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -437,8 +450,12 @@ function click( e ) {
 			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
 		}
 	} else if (action === 'pick') {
-
-		console.log( 'TODO: place a tile' );
+		targetlist = players[player][3];
+		if (!findonlist( targetlist, xboard, yboard )) {
+			return;
+		}
+		place( xboard, yboard );
+		nextplayer();
 	} else {
 		console.log( 'invalid action');
 	}
@@ -469,6 +486,8 @@ $( document ).ready( function(){
 	x = Math.floor( Math.random() * 5 + 1 );
 	y = Math.floor( Math.random() * 5 + 1 );
 	board[x][y] = 'dfact';
+
+	findroads( board );
 
 	c = document.getElementById( 'board' );
 	ctx = c.getContext( '2d' );
