@@ -382,6 +382,16 @@ function mouseleave( e ) {
 	at = board[xboard][yboard];
 
 	drawboard();
+	if (turn === 1) {
+		for (i = 1; i <= 10; i++) {
+			for (j = 1; j <= 10; j++) {
+				if (board[i][j] === 0) {
+					imgdrawat( 'tar', i, j );
+				}
+			}
+		}
+		return;
+	}
 	if (action === 'mark') {
 		for (i = 0; i < adjlist.length; i++) {
 			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
