@@ -370,6 +370,32 @@ function mousemove( e ) {
 	}
 }
 
+function mouseleave( e ) {
+	var i, x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
+
+	x = e.pageX - this.offsetLeft;
+	y = e.pageY - this.offsetTop;
+	xsq = Math.floor( x/50 );
+	ysq = Math.floor( y/50 );
+	xboard = xsq + 1;
+	yboard = ysq + 1;
+	at = board[xboard][yboard];
+
+	drawboard();
+	if (action === 'mark') {
+		for (i = 0; i < adjlist.length; i++) {
+			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+		}
+	} else if (action === 'pick') {
+		targetlist = players[player][3];
+		for (i = 0; i < targetlist.length; i++) {
+			imgdrawat( 'picktar', targetlist[i][0], targetlist[i][1] )
+		}
+	} else {
+		console.log( 'ERROR: invalid action' );
+	}
+}
+
 function pick() {
 	var tile = 'park';
 	var r = Math.floor( Math.random() * emptyremaining );
@@ -571,9 +597,7 @@ $( document ).ready( function(){
 	ctx = c.getContext( '2d' );
 
 	$( '#board' ).mousemove( firstmousemove );
-	$( '#board' ).mouseleave( function( e ) {
-		drawboard();
-	});
+	$( '#board' ).mouseleave( mouseleave );	
 	$( '#board' ).click( click );
 	$( '#pick' ).html( '' );	
 	$( '#undo' ).click( undo );
