@@ -1,80 +1,85 @@
-var i = 0, c, ctx,
-selpiece = 'rmark',
-playerpiece = 'rmark',
-speclist = [],
-spechistory = [],
-action = 'mark',
-players = [
-[ 'r', 6, [ 'arout', 'brout', 'crout', 'drout' ], [] ],
-[ 'g', 6, [ 'agout', 'bgout', 'cgout', 'dgout' ], [] ],
-[ 'b', 6, [ 'about', 'bbout', 'cbout', 'dbout' ], [] ],
-[ 'c', 6, [ 'acout', 'bcout', 'ccout', 'dcout' ], [] ],
-[ 'p', 6, [ 'apout', 'bpout', 'cpout', 'dpout' ], [] ]
-],
-player,
-turn = 1,
-playerturn = 0,
-turnorder = [ 0, 1, 2, 3, 4 ],
-board = [
-[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, 'afact', 0, 0, 0, 0, 0, 0, 0, 0, 0, -1 ],
-[ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
-],
-boardhistory = [],
-adjlist = [],
-emptyremaining = 96;
+"use strict";
 
-spechistory.push( speclist );
-boardhistory.push( board );
+(function() {
+	var c, ctx;
+	var selPiece = 'rm', playerPiece = 'rm', action = 'mark';
+	var players = {}, playerTurn = 0, turn = 1;
+	var turnorder = [ 'r', 'g', 'b', 'c', 'm' ];
+	var board = [
+	'------------------------',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                    --',
+	'--                  af--',
+	'------------------------',
+	];
+	var boardHistory = [];
+	var adjacentList = [];
+	var emptyRemaining = 96;
 
+	function playerInit( color ) {
+		return {
+			color: color,
+			markersRemaining: 8,
+			spacesMarked: 6,
+			outletsRemaining: [ 'a', 'b', 'c', 'd' ],
+		}
+	};
 
-function findonlist( list, xsq, ysq ) {
-	var i = 0;
+	players = {
+		r: playerInit( 'r' ),
+		g: playerInit( 'g' ),
+		b: playerInit( 'b' ),
+		c: playerInit( 'c' ),
+		m: playerInit( 'm' ),
+	};
 
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
-				return true;
+	boardHistory.push( board );
+
+	function findonlist( list, xsq, ysq ) {
+		var i = 0;
+
+		if (list) {
+			for (i = 0; i < list.length; i++) {
+				if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
+					return true;
+				}
 			}
 		}
+		return false
 	}
-	return false
-}
 
-function removefromlist( list, xsq, ysq ) {
-	var i = 0, ret = [];
+	function removefromlist( list, xsq, ysq ) {
+		var i = 0, ret = [];
 
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
-				ret.push( [list[i][0], list[i][1]] );
-			};
+		if (list) {
+			for (i = 0; i < list.length; i++) {
+				if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
+					ret.push( [list[i][0], list[i][1]] );
+				};
+			}
 		}
+		return ret;
 	}
-	return ret;
-}
 
-function removeNameFromList( list, name ) {
-	var i = 0, ret = [];
+	function removeNameFromList( list, name ) {
+		var i = 0, ret = [];
 
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if (list[i] !== name) {
-				ret.push( name );
-			};
+		if (list) {
+			for (i = 0; i < list.length; i++) {
+				if (list[i] !== name) {
+					ret.push( name );
+				};
+			}
 		}
+		return ret;
 	}
-	return ret;
-}
 
 // test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
 function filltest( tempboard, testx, testy, front ) {
@@ -569,11 +574,7 @@ function click( e ) {
 $( document ).ready( function(){
 	var i, x, y, playermark, turnstr = '';
 
-	console.log( 'newff' );
-
-	console.log( turnorder );
 	turnorder = _.shuffle( turnorder );
-	console.log( turnorder );
 
 	for (i = 0; i < 5; i++ ) {
 		playermark = players[turnorder[i]][0] + 'mark';
@@ -581,7 +582,7 @@ $( document ).ready( function(){
 	}
 	$( '#turnorder' ).html( turnstr );
 
-	player = turnorder[0];
+	playerTurn = 0;
 	selpiece = players[player][0] + 'mark';
 	playerpiece = selpiece;
 	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
@@ -610,3 +611,5 @@ $( document ).ready( function(){
 
 	drawboard();
 });
+
+}());
