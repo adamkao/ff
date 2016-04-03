@@ -1,10 +1,19 @@
 "use strict";
 
 (function() {
-	var c, ctx;
-	var selPiece = 'rm', playerPiece = 'rm', action = 'mark';
+	var ctx;
+	var selectedPieceImg = '', playerPieceImg = '', action = 'mark';
 	var players = {}, playerTurn = 0, turn = 1;
-	var turnorder = [ 'r', 'g', 'b', 'c', 'm' ];
+	var turnOrder = [];
+
+	// board squares are labeled with two chars.
+	// '--' is the edge of the board (off the board).
+	// '  ' is a square with nothing on it.
+	// 'Qf' is a factory. Q is the quadrant (a, b, c, d) of the board, starting at the SE and going clockwise.
+	// 'QP' is a players outlet. Q is the corresponding factory, P is the color (r, g, b, c, m) of the player.
+	// 'mP' is a players marker.
+	// 'rd' is a road.
+	// 'pk' is a park.
 	var board = [
 	'------------------------',
 	'--                    --',
@@ -31,7 +40,6 @@
 			outletsRemaining: [ 'a', 'b', 'c', 'd' ],
 		}
 	};
-
 	players = {
 		r: playerInit( 'r' ),
 		g: playerInit( 'g' ),
@@ -39,7 +47,7 @@
 		c: playerInit( 'c' ),
 		m: playerInit( 'm' ),
 	};
-
+	turnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 	boardHistory.push( board );
 
 	function findonlist( list, xsq, ysq ) {
@@ -151,16 +159,17 @@ function testroad( x, y ) {
 	return false;
 }
 
-function findroads( board ) {
-	var i = 0, x, y;
-	for (x = 1; x <= 10; x++) {
-		for (y = 1; y <= 10; y++) {
+function findRoads( board ) {
+	var at = '';
+	for (var x = 1; x <= 10; x++) {
+		for (var y = 1; y <= 10; y++) {
 			at = board[x][y];
+			if ((at === '  ') || (at.substr( 1, 1 ) === 'm')) {
 			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
 				if (testroad( x, y )) {
 					board[x][y] = 'road';
 					emptyremaining--;					
-					for (i = 0; i < 5; i++) {
+					for (var i = 0; i < 5; i++) {
 						if (findonlist( players[i][3], x, y )) {
 							players[i][3] = removefromlist( players[i][3], x, y );
 							players[i][1]++
@@ -572,35 +581,28 @@ function click( e ) {
 }
 
 $( document ).ready( function(){
-	var i, x, y, playermark, turnstr = '';
+	var playerMarkImg, turnStr = '';
 
-	turnorder = _.shuffle( turnorder );
+	ctx = document.getElementById( 'board' ).getContext( '2d' );
 
-	for (i = 0; i < 5; i++ ) {
-		playermark = players[turnorder[i]][0] + 'mark';
-		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
+	turnOrder = _.shuffle( turnOrder );
+
+	for (var i = 0; i < 5; i++ ) {
+		playerMarkImg = turnOrder[i].color + 'mark';
+		turnStr += "<img id='" + playerMarkImg + "' src='" + playerMarkImg + ".png'>" + turnOrder[i].markersRemaining;
 	}
-	$( '#turnorder' ).html( turnstr );
+	$( '#turnorder' ).html( turnStr );
 
 	playerTurn = 0;
-	selpiece = players[player][0] + 'mark';
-	playerpiece = selpiece;
-	$( '#' + selpiece ).css( 'border', 'solid 3px black' );
+	selectedPieceImg = turnOrder[0].color + 'mark';
+	playerPieceImg = selectedPieceImg;
+	$( '#' + selectedPieceImg ).css( 'border', 'solid 3px black' );
 
-	x = Math.floor( Math.random() * 5 + 6 );
-	y = Math.floor( Math.random() * 5 + 6 );
-	board[x][y] = 'bfact';
-	x = Math.floor( Math.random() * 5 + 1 );
-	y = Math.floor( Math.random() * 5 + 6 );
-	board[x][y] = 'cfact';
-	x = Math.floor( Math.random() * 5 + 1 );
-	y = Math.floor( Math.random() * 5 + 1 );
-	board[x][y] = 'dfact';
+	board[ _.random( 6, 10 ), _.random( 6, 10 ) ] = 'bf';
+	board[ _.random( 6, 10 ), _.random( 1, 5 ) ] = 'cf';
+	board[ _.random( 1, 5 ), _.random( 1, 5 ) ] = 'df';
 
-	findroads( board );
-
-	c = document.getElementById( 'board' );
-	ctx = c.getContext( '2d' );
+	findRoads( board );
 
 	$( '#board' ).mousemove( firstmousemove );
 	$( '#board' ).mouseleave( mouseleave );	
