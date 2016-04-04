@@ -374,12 +374,8 @@ function mousemove( e ) {
 	}
 }
 
-function firstmousemove( e ) {
-	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
-
+function firstDrawBoard() {
 	drawBoard();
-
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
 			if (at( board, i, j ) === '  ') {
@@ -387,44 +383,15 @@ function firstmousemove( e ) {
 			}
 		}
 	}
-	if (at( board, xsq, ysq ) === '  ') {
-		imgdrawat( selectedPieceImg, xsq, ysq );
-	}
 }
 
-function mouseleave( e ) {
-	var x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
+function firstmousemove( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xsq = Math.floor( x/50 );
-	ysq = Math.floor( y/50 );
-	xboard = xsq + 1;
-	yboard = ysq + 1;
-	at = board[xboard][yboard];
-
-	drawBoard();
-	if (turn === 1) {
-		for (var i = 1; i <= 10; i++) {
-			for (var j = 1; j <= 10; j++) {
-				if (board[i][j] === 0) {
-					imgdrawat( 'tar', i, j );
-				}
-			}
-		}
-		return;
-	}
-	if (action === 'mark') {
-		for (i = 0; i < adjlist.length; i++) {
-			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
-		}
-	} else if (action === 'pick') {
-		targetlist = players[player][3];
-		for (i = 0; i < targetlist.length; i++) {
-			imgdrawat( 'picktar', targetlist[i][0], targetlist[i][1] )
-		}
-	} else {
-		console.log( 'ERROR: invalid action' );
+	firstDrawBoard();
+	if (at( board, xsq, ysq ) === '  ') {
+		imgdrawat( selectedPieceImg, xsq, ysq );
 	}
 }
 
@@ -623,7 +590,7 @@ $( document ).ready( function(){
 	findRoads( board );
 
 	$( '#board' ).mousemove( firstmousemove );
-	$( '#board' ).mouseleave( mouseleave );	
+	$( '#board' ).mouseleave( firstDrawBoard );	
 	$( '#board' ).click( click );
 	$( '#pick' ).html( '' );	
 	$( '#undo' ).click( undo );
