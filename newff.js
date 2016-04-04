@@ -313,8 +313,8 @@ function drawBoard() {
 	for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
 		for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 
-			q = board[y].charAt( x*2 );
-			p = board[y].charAt( x*2 + 1 );
+			q = board[x][y].charAt( 0 );
+			p = board[x][y].charAt( 1 );
 
 			if ((q === ' ') || (q === '-')) {
 				// do nothing
@@ -322,14 +322,14 @@ function drawBoard() {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );				
 			} else if (q === 'p') {
-				imgdrawat( 'park.png', x, y );
+				imgdrawat( 'park', x, y );
 			} else if (p === 'f') {
-				imgdrawat( q + 'act.png', x, y );
+				imgdrawat( q + 'fact', x, y );
 			} else if (_.contains( playerColors, p )) {
 				if (_.contains( factoryQuadrants, q )) {
-					imgdrawat( q + 'out.png', x, y );
+					imgdrawat( q + 'out', x, y );
 				}
-				imgdrawat( p + 'mark.png', x, y );
+				imgdrawat( p + 'mark', x, y );
 			} else {
 				console.log( 'ERROR: impossible case in drawBoard' );
 			}
@@ -347,7 +347,7 @@ function drawBoard() {
 function firstmousemove( e ) {
 	var i, j, x, y, xsq, ysq, xboard, yboard;
 
-	drawboard();
+	drawBoard();
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
 	xsq = Math.floor( x/50 );
@@ -400,7 +400,7 @@ function mousemove( e ) {
 }
 
 function mouseleave( e ) {
-	var i, x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
+	var x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
 
 	x = e.pageX - this.offsetLeft;
 	y = e.pageY - this.offsetTop;
@@ -410,10 +410,10 @@ function mouseleave( e ) {
 	yboard = ysq + 1;
 	at = board[xboard][yboard];
 
-	drawboard();
+	drawBoard();
 	if (turn === 1) {
-		for (i = 1; i <= 10; i++) {
-			for (j = 1; j <= 10; j++) {
+		for (var i = 1; i <= 10; i++) {
+			for (var j = 1; j <= 10; j++) {
 				if (board[i][j] === 0) {
 					imgdrawat( 'tar', i, j );
 				}
@@ -623,9 +623,9 @@ $( document ).ready( function(){
 	playerPieceImg = selectedPieceImg;
 	$( '#' + selectedPieceImg ).css( 'border', 'solid 3px black' );
 
-	board[ _.random( 6, 10 ), _.random( 6, 10 ) ] = 'bf';
-	board[ _.random( 6, 10 ), _.random( 1, 5 ) ] = 'cf';
-	board[ _.random( 1, 5 ), _.random( 1, 5 ) ] = 'df';
+	board[ _.random( 6, 10 ) ][ _.random( 6, 10 ) ] = 'bf';
+	board[ _.random( 6, 10 ) ][ _.random( 1, 5 ) ] = 'cf';
+	board[ _.random( 1, 5 ) ][ _.random( 1, 5 ) ] = 'df';
 
 	findRoads( board );
 
