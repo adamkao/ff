@@ -12,7 +12,7 @@ board squares are labeled with two chars.
 'Qf' is a factory. Q is the quadrant (a, b, c, d), starting at the NW and going clockwise.
 'QP' is a players outlet. Q is the corresponding factory, P is the player (r, g, b, c, m).
 'mP' is a players marker.
-'rd' is a road.
+'oo' is a road.
 'pk' is a park.
 May be temporarily set to 'fl' when testing by flood-filling.
 */
@@ -320,7 +320,7 @@ function drawBoard() {
 
 			if ((q === ' ') || (q === '-')) {
 				// do nothing
-			} else if (q === 'r') {
+			} else if (q === 'o') {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );				
 			} else if (q === 'p') {
@@ -356,7 +356,7 @@ function mousemove( e ) {
 	yboard = ysq + 1;
 	at = board[xboard][yboard];
 
-	drawboard();
+	drawBoard();
 	if ((at === 0) || ((at !== -1) && (at.substr( 1, 5 )) === 'mark')) {
 		imgdrawat( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
@@ -493,8 +493,8 @@ function nextPlayer() {
 		gameTurn++;
 	}
 	player = playerTurnOrder[ playerOnTurn ];
-	selectedPiece = player.color + 'm';
-	playerPieceImg = selectedPiece + 'ark';
+	selectedPiece = 'm' + player.color;
+	playerPieceImg = player.color + 'mark';
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 	if (player.markersRemaining && (player.markedSpaces.length < 6)) {
 		action = 'mark';
@@ -592,8 +592,8 @@ $( document ).ready( function(){
 	$( '#turnorder' ).html( turnStr );
 
 	playerOnTurn = 0;
-	selectedPiece = playerTurnOrder[0].color + 'm';
-	playerPieceImg = selectedPiece + 'ark';
+	selectedPiece = 'm' + playerTurnOrder[0].color;
+	playerPieceImg = playerTurnOrder[0].color + 'mark';
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 
 	board[ _.random( 6, 10 ) ][ _.random( 6, 10 ) ] = 'bf';
