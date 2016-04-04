@@ -9,7 +9,7 @@ var players = {}, playerTurnOrder = [], playerOnTurn = 0, turn = 1;
 board squares are labeled with two chars.
 '--' is the edge of the board (off the board).
 '  ' is a square with nothing on it.
-'Qf' is a factory. Q is the quadrant (a, b, c, d), starting at the SE and going clockwise.
+'Qf' is a factory. Q is the quadrant (a, b, c, d), starting at the NW and going clockwise.
 'QP' is a players outlet. Q is the corresponding factory, P is the player (r, g, b, c, m).
 'mP' is a players marker.
 'rd' is a road.
@@ -18,16 +18,16 @@ May be temporarily set to 'fl' when testing by flood-filling.
 */
 var board = [
 [ '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
-[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
 [ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', 'af', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
 [ '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--' ],
 ];
 var boardHistory = [];
@@ -53,10 +53,10 @@ players = {
 };
 playerTurnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 
-function setSquare( board, x, y, label ) {
-	var row = board[y];
-	board[y] = row.replace( )
+function at( board, x, y ) {
+	return board[y][x];
 }
+
 function findonlist( list, xsq, ysq ) {
 	var i = 0;
 
@@ -189,7 +189,7 @@ function findRoads( board ) {
 		}
 		updateadjlist();
 	}
-*/
+	*/
 }
 
 function hasmarker( at ) {
@@ -295,7 +295,7 @@ function imgdrawat( piece, xsq, ysq ){
 
 function drawBoard() {
 	var x = 0, y = 0, xdraw = 0, ydraw = 0;
-	var at = '', q = '', p = '';
+	var q = '', p = '';
 	var playerMark = '', turnString = '';
 
 	ctx.clearRect( 0, 0, 501, 501 );
@@ -313,8 +313,8 @@ function drawBoard() {
 	for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
 		for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 
-			q = board[x][y].charAt( 0 );
-			p = board[x][y].charAt( 1 );
+			q = at( board, x, y ).charAt( 0 );
+			p = at( board, x, y ).charAt( 1 );
 
 			if ((q === ' ') || (q === '-')) {
 				// do nothing
@@ -334,14 +334,13 @@ function drawBoard() {
 				console.log( 'ERROR: impossible case in drawBoard' );
 			}
 		}
-
-		for (var i = 0; i < 5; i++ ) {
-			playerMark = playerTurnOrder[i].color + 'mark';
-			turnString += "<img id='" + playerMark + "' src='" + playerMark + ".png'>" + playerTurnOrder[i].markersRemaining;
-		}
-		$( '#turnorder' ).html( turnString );
-		$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 	}
+	for (var i = 0; i < 5; i++ ) {
+		playerMark = playerTurnOrder[i].color + 'mark';
+		turnString += "<img id='" + playerMark + "' src='" + playerMark + ".png'>" + playerTurnOrder[i].markersRemaining;
+	}
+	$( '#turnorder' ).html( turnString );
+	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 }
 
 function firstmousemove( e ) {
