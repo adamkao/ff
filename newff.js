@@ -1,10 +1,10 @@
 "use strict";
 
 var ctx;
-var selectedPieceImg = '', playerPieceImg = '', action = 'mark';
+var selectedPiece = '', playerPieceImg = '', action = 'mark';
 var playerColors = [ 'r', 'g', 'b', 'c', 'm' ];
 var factoryQuadrants = [ 'a', 'b', 'c', 'd' ];
-var players = {}, playerTurnOrder = [], playerOnTurn = 0, turn = 1;
+var players = {}, playerTurnOrder = [], playerOnTurn = 0, gameTurn = 1;
 /*
 board squares are labeled with two chars.
 '--' is the edge of the board (off the board).
@@ -40,7 +40,7 @@ function playerInit( color ) {
 	return {
 		color: color,
 		markersRemaining: 8,
-		spacesMarked: 6,
+		markedSpaces: [],
 		outletsRemaining: [ 'a', 'b', 'c', 'd' ],
 	};
 };
@@ -56,7 +56,9 @@ playerTurnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 function at( board, x, y ) {
 	return board[y][x];
 }
-
+function put( board, x, y, label ) {
+	board[y][x] = label;
+}
 function findonlist( list, xsq, ysq ) {
 	var i = 0;
 
@@ -276,7 +278,7 @@ function haspieceadjacent( xsq, ysq ) {
 		)
 }
 
-function updateadjlist() {
+function updateAdjacentList() {
 	var i, j, xsq, ysq;
 
 	adjacentList = [];
@@ -391,7 +393,7 @@ function firstmousemove( e ) {
 
 	firstDrawBoard();
 	if (at( board, xsq, ysq ) === '  ') {
-		imgdrawat( selectedPieceImg, xsq, ysq );
+		imgdrawat( playerPieceImg, xsq, ysq );
 	}
 }
 
@@ -482,31 +484,55 @@ function place( xboard, yboard ) {
 }
 
 
-function nextplayer() {
-	playerturn++;
-	if (playerturn === 5) {
-		playerturn = 0;
-		turn++;
+function nextPlayer() {
+	var player;
+
+	playerOnTurn++;
+	if (playerOnTurn === 5) {
+		playerOnTurn = 0;
+		gameTurn++;
 	}
-	player = turnorder[playerturn];
-	selpiece = players[player][0] + 'mark';
-	playerpiece = selpiece;
-	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
-	if (players[player][1]) {
+	player = playerTurnOrder[ playerOnTurn ];
+	selectedPiece = player.color + 'm';
+	playerPieceImg = selectedPiece + 'ark';
+	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
+	if (player.markersRemaining && (players.markedSpaces.length < 6)) {
 		action = 'mark';
-		if (players[player][3].length) {
+		if (player.markedSpaces.length) {
 			$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
 			$( '#pickbtn' ).click( pick );			
 		} else {
 			$( '#pick' ).html( 'foo' );	
 		}
-	} else if (adjlist) {
+	} else if (adjacentList) {
 		action = 'pick';
 		pick();
 	} else {
-		nextplayer();
+		nextPlayer();
 		console.log( 'TODO: check for end of game' );
 	}
+}
+
+function firstclick( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+
+	if (at( board, xsq, ysq ) === '  ') {
+		boardhistory.push( board );
+		board = $.extend( true, [], board );
+		put( board, xsq, ysq, selectedPiece );
+		playerTurnOrder[playerOnTurn].markersRemaining--;
+		playerTurnOrder[playerOnTurn].markedSpaces.push( { x: xsq, y: ysq } );
+	}
+	nextPlayer();
+	if (gameTurn === 2) {
+		$( '#board' ).off( 'mousemove' );		
+		$( '#board' ).mousemove( mousemove );
+		$( '#board' ).off( 'mouseleave' );		
+		$( '#board' ).mouseleave( drawBoard );
+		updateAdjacentList();
+	}
+	drawBoard();
 }
 
 function click( e ) {
@@ -518,21 +544,6 @@ function click( e ) {
 	yboard = Math.floor( y/50 ) + 1;
 
 	if (turn === 1) {
-		if (board[xboard][yboard] === 0) {
-			boardhistory.push( board );
-			board = $.extend( true, [], board );
-			board[xboard][yboard] = selpiece;	
-			players[player][3].push( [xboard, yboard] );
-			players[player][1]--;
-		}
-		nextplayer();
-		if (turn === 2) {
-			$( '#board' ).off( 'mousemove' );		
-			$( '#board' ).mousemove( mousemove );
-			updateadjlist();
-		}
-		drawboard();
-		return;
 	}
 	if (action === 'mark') {
 		if (findonlist( adjlist, xboard, yboard )) {
@@ -579,9 +590,9 @@ $( document ).ready( function(){
 	$( '#turnorder' ).html( turnStr );
 
 	playerOnTurn = 0;
-	selectedPieceImg = playerTurnOrder[0].color + 'mark';
-	playerPieceImg = selectedPieceImg;
-	$( '#' + selectedPieceImg ).css( 'border', 'solid 3px black' );
+	selectedPiece = playerTurnOrder[0].color + 'm';
+	playerPieceImg = selectedPiece + 'ark';
+	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 
 	board[ _.random( 6, 10 ) ][ _.random( 6, 10 ) ] = 'bf';
 	board[ _.random( 6, 10 ) ][ _.random( 1, 5 ) ] = 'cf';
