@@ -343,30 +343,6 @@ function drawBoard() {
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 }
 
-function firstmousemove( e ) {
-	var i, j, x, y, xsq, ysq, xboard, yboard;
-
-	drawBoard();
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xsq = Math.floor( x/50 );
-	ysq = Math.floor( y/50 );
-	xboard = xsq + 1;
-	yboard = ysq + 1;
-	if (board[xboard][yboard] === 0) {
-		imgdrawat( selpiece,
-			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
-			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
-	}
-	for (i = 1; i <= 10; i++) {
-		for (j = 1; j <= 10; j++) {
-			if (board[i][j] === 0) {
-				imgdrawat( 'tar', i, j );
-			}
-		}
-	}
-}
-
 function mousemove( e ) {
 	var i, x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
 
@@ -395,6 +371,24 @@ function mousemove( e ) {
 		}
 	} else {
 		console.log( 'ERROR: invalid action' );
+	}
+}
+
+function firstmousemove( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+
+	drawBoard();
+
+	for (var i = 1; i <= 10; i++) {
+		for (var j = 1; j <= 10; j++) {
+			if (at( board, i, j ) === '  ') {
+				imgdrawat( 'tar', i, j );
+			}
+		}
+	}
+	if (at( board, xsq, ysq ) === '  ') {
+		imgdrawat( selectedPieceImg, xsq, ysq );
 	}
 }
 
