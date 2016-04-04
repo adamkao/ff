@@ -496,7 +496,7 @@ function nextPlayer() {
 	selectedPiece = player.color + 'm';
 	playerPieceImg = selectedPiece + 'ark';
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
-	if (player.markersRemaining && (players.markedSpaces.length < 6)) {
+	if (player.markersRemaining && (player.markedSpaces.length < 6)) {
 		action = 'mark';
 		if (player.markedSpaces.length) {
 			$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
@@ -518,7 +518,7 @@ function firstclick( e ) {
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
 	if (at( board, xsq, ysq ) === '  ') {
-		boardhistory.push( board );
+		boardHistory.push( board );
 		board = $.extend( true, [], board );
 		put( board, xsq, ysq, selectedPiece );
 		playerTurnOrder[playerOnTurn].markersRemaining--;
@@ -528,6 +528,8 @@ function firstclick( e ) {
 	if (gameTurn === 2) {
 		$( '#board' ).off( 'mousemove' );		
 		$( '#board' ).mousemove( mousemove );
+		$( '#board' ).off( 'click' );		
+		$( '#board' ).click( click );
 		$( '#board' ).off( 'mouseleave' );		
 		$( '#board' ).mouseleave( drawBoard );
 		updateAdjacentList();
@@ -602,7 +604,7 @@ $( document ).ready( function(){
 
 	$( '#board' ).mousemove( firstmousemove );
 	$( '#board' ).mouseleave( firstDrawBoard );	
-	$( '#board' ).click( click );
+	$( '#board' ).click( firstclick );
 	$( '#pick' ).html( '' );	
 	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
