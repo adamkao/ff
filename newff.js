@@ -1,185 +1,195 @@
 "use strict";
 
-(function() {
-	var ctx;
-	var selectedPieceImg = '', playerPieceImg = '', action = 'mark';
-	var players = {}, playerTurn = 0, turn = 1;
-	var turnOrder = [];
+var ctx;
+var selectedPieceImg = '', playerPieceImg = '', action = 'mark';
+var playerColors = [ 'r', 'g', 'b', 'c', 'm' ];
+var factoryQuadrants = [ 'a', 'b', 'c', 'd' ];
+var players = {}, playerTurnOrder = [], playerOnTurn = 0, turn = 1;
+/*
+board squares are labeled with two chars.
+'--' is the edge of the board (off the board).
+'  ' is a square with nothing on it.
+'Qf' is a factory. Q is the quadrant (a, b, c, d), starting at the SE and going clockwise.
+'QP' is a players outlet. Q is the corresponding factory, P is the player (r, g, b, c, m).
+'mP' is a players marker.
+'rd' is a road.
+'pk' is a park.
+May be temporarily set to 'fl' when testing by flood-filling.
+*/
+var board = [
+[ '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '--' ],
+[ '--', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', '  ', 'af', '--' ],
+[ '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--', '--' ],
+];
+var boardHistory = [];
+var adjacentList = [];
+var emptySquaresRemaining = 96;
 
-	// board squares are labeled with two chars.
-	// '--' is the edge of the board (off the board).
-	// '  ' is a square with nothing on it.
-	// 'Qf' is a factory. Q is the quadrant (a, b, c, d) of the board, starting at the SE and going clockwise.
-	// 'QP' is a players outlet. Q is the corresponding factory, P is the color (r, g, b, c, m) of the player.
-	// 'mP' is a players marker.
-	// 'rd' is a road.
-	// 'pk' is a park.
-	var board = [
-	'------------------------',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                    --',
-	'--                  af--',
-	'------------------------',
-	];
-	var boardHistory = [];
-	var adjacentList = [];
-	var emptyRemaining = 96;
+boardHistory.push( board );
 
-	function playerInit( color ) {
-		return {
-			color: color,
-			markersRemaining: 8,
-			spacesMarked: 6,
-			outletsRemaining: [ 'a', 'b', 'c', 'd' ],
-		}
+function playerInit( color ) {
+	return {
+		color: color,
+		markersRemaining: 8,
+		spacesMarked: 6,
+		outletsRemaining: [ 'a', 'b', 'c', 'd' ],
 	};
-	players = {
-		r: playerInit( 'r' ),
-		g: playerInit( 'g' ),
-		b: playerInit( 'b' ),
-		c: playerInit( 'c' ),
-		m: playerInit( 'm' ),
-	};
-	turnOrder = [ players.r, players.g, players.b, players.c, players.m ];
-	boardHistory.push( board );
+};
+players = {
+	r: playerInit( 'r' ),
+	g: playerInit( 'g' ),
+	b: playerInit( 'b' ),
+	c: playerInit( 'c' ),
+	m: playerInit( 'm' ),
+};
+playerTurnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 
-	function findonlist( list, xsq, ysq ) {
-		var i = 0;
+function setSquare( board, x, y, label ) {
+	var row = board[y];
+	board[y] = row.replace( )
+}
+function findonlist( list, xsq, ysq ) {
+	var i = 0;
 
-		if (list) {
-			for (i = 0; i < list.length; i++) {
-				if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
-					return true;
-				}
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
+				return true;
 			}
 		}
-		return false
 	}
+	return false
+}
 
-	function removefromlist( list, xsq, ysq ) {
-		var i = 0, ret = [];
+function removefromlist( list, xsq, ysq ) {
+	var i = 0, ret = [];
 
-		if (list) {
-			for (i = 0; i < list.length; i++) {
-				if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
-					ret.push( [list[i][0], list[i][1]] );
-				};
-			}
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
+				ret.push( [list[i][0], list[i][1]] );
+			};
 		}
-		return ret;
 	}
+	return ret;
+}
 
-	function removeNameFromList( list, name ) {
-		var i = 0, ret = [];
+function removeNameFromList( list, name ) {
+	var i = 0, ret = [];
 
-		if (list) {
-			for (i = 0; i < list.length; i++) {
-				if (list[i] !== name) {
-					ret.push( name );
-				};
-			}
+	if (list) {
+		for (i = 0; i < list.length; i++) {
+			if (list[i] !== name) {
+				ret.push( name );
+			};
 		}
-		return ret;
 	}
+	return ret;
+}
 
-// test a square to be filled:  if it is empty or a road, set it to 'fill' and add it to the list of recently filled squares
-function filltest( tempboard, testx, testy, front ) {
-	var testpt;
-	var at = tempboard[testx][testy];
+function isRoad( x, y ) {
+	return (board[y][x] === 'rd');
+}
 
-	if ((at === 0) || (at === 'road') || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
-		tempboard[testx][testy] = 'fill';
-		testpt = new Object();
-		testpt.x = testx;
-		testpt.y = testy;
-		front.push( testpt );
+function isMarker( x, y ) {
+	return (board[y][x].slice( 1, 2 ) === 'm' );
+}
+
+function isEmpty( x, y ) {
+	return (board[y][x] === '  ');
+}
+
+function isFillable( x, y ) {
+	return (isRoad( x, y ) || isMarker( x, y ) || isEmpty( x, y ));
+}
+
+function fillTest( tempboard, testx, testy, front ) {
+	if (isFillable( testx, testy )) {
+		tempboard[ testy ][ testx ] = 'fl';
+		front.push( { x: testx, y: testy } );
 	}
 }
 
 // flood fill algorithm
 function flood( tempboard, x, y ) {
-	var front, oldfront;
+	var front, oldFront;
 
-	front = new Array();
-	filltest( tempboard, x, y, front );
+	front = [];
+	filltest( tempBoard, x, y, front );
 
-	oldfront = front;
-	front = new Array();
+	oldFront = front;
+	front = [];
 
 	// if the old list is empty we are done
-	while (oldfront.length) {
-		for (i = 0; i < oldfront.length; i++) {
-			filltest( tempboard, oldfront[i].x - 1, oldfront[i].y, front );
-			filltest( tempboard, oldfront[i].x + 1, oldfront[i].y, front );
-			filltest( tempboard, oldfront[i].x, oldfront[i].y - 1, front );
-			filltest( tempboard, oldfront[i].x, oldfront[i].y + 1, front );
+	while (oldFront.length) {
+		for (var i = 0; i < oldFront.length; i++) {
+			fillTest( tempBoard, oldFront[i].x - 1, oldFront[i].y, front );
+			fillTest( tempBoard, oldFront[i].x + 1, oldFront[i].y, front );
+			fillTest( tempBoard, oldFront[i].x, oldFront[i].y - 1, front );
+			fillTest( tempBoard, oldFront[i].x, oldFront[i].y + 1, front );
 		}
-		oldfront = front;
-		front = new Array();
+		oldFront = front;
+		front = [];
 	}
 }
 
-// find an empty square
-function findempty( bd, pt ) {
-	var x, y, at;
-	for (x = 1; x <= 10; x++) {
-		for (y = 1; y <= 10; y++) {
-			at = bd[x][y];
-			if ((at === 0) || (at === 'road') || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
-				pt.x = x;
-				pt.y = y;
-				return;
+function findFillable( bd, pt ) {
+	for (var x = 1; x <= 10; x++) {
+		for (var y = 1; y <= 10; y++) {
+			if (isFillable( x, y )) {
+				pt = { x: x, y: y };
+				return pt;
 			}
 		}
 	}
 }
 
 // test a square to see if it should be a road:  block it, flood fill an area, and see if any squares are not flooded
-function testroad( x, y ) {
-	var pt = new Object(), tempboard = $.extend( true, [], board );
+function testRoad( x, y ) {
+	var pt = { x: x, y: y };
+	var tempBoard = $.extend( true, [], board );
 
-	tempboard[x][y] = 'park';
-	pt.x = 0;
-	pt.y = 0;
-	findempty( tempboard, pt );
+	tempBoard[y][x] = 'pk';
+	findFillable( tempboard, pt );
 	flood( tempboard, pt.x, pt.y );
-	pt.x = 0;
-	pt.y = 0;
-	findempty( tempboard, pt );
-	if ((pt.x != 0) || (pt.y != 0)) {
-		return true;
-	}
-	return false;
+	findFillable( tempboard, pt );
+
+	return (pt.x || pt.y);
 }
 
 function findRoads( board ) {
+/*
 	var at = '';
 	for (var x = 1; x <= 10; x++) {
 		for (var y = 1; y <= 10; y++) {
 			at = board[x][y];
 			if ((at === '  ') || (at.substr( 1, 1 ) === 'm')) {
-			if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
-				if (testroad( x, y )) {
-					board[x][y] = 'road';
-					emptyremaining--;					
-					for (var i = 0; i < 5; i++) {
-						if (findonlist( players[i][3], x, y )) {
-							players[i][3] = removefromlist( players[i][3], x, y );
-							players[i][1]++
+				if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
+					if (testRoad( x, y )) {
+						board[x][y] = 'rd';
+						emptySquaresRemaining--;					
+						for (var i = 0; i < 5; i++) {
+							if (findonlist( players[i][3], x, y )) {
+								players[i][3] = removefromlist( players[i][3], x, y );
+								players[i][1]++
+							}
 						}
 					}
 				}
 			}
 		}
+		updateadjlist();
 	}
-	updateadjlist();
+*/
 }
 
 function hasmarker( at ) {
@@ -269,11 +279,11 @@ function haspieceadjacent( xsq, ysq ) {
 function updateadjlist() {
 	var i, j, xsq, ysq;
 
-	adjlist = [];
+	adjacentList = [];
 	for (i = 1; i <= 10; i++) {
 		for (j = 1; j <= 10; j++) {
 			if ((board[i][j] === 0) && haspieceadjacent( i, j )) {
-				adjlist.push( [i, j] );
+				adjacentList.push( { x: i, y: j } );
 			}
 		}
 	}
@@ -283,8 +293,10 @@ function imgdrawat( piece, xsq, ysq ){
 	ctx.drawImage( $( '#' + piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
 
-function drawboard() {
-	var i, x, y, xdraw, ydraw, playermark, turnstr = '';;
+function drawBoard() {
+	var x = 0, y = 0, xdraw = 0, ydraw = 0;
+	var at = '', q = '', p = '';
+	var playerMark = '', turnString = '';
 
 	ctx.clearRect( 0, 0, 501, 501 );
 	ctx.beginPath();
@@ -298,25 +310,38 @@ function drawboard() {
 	ctx.lineWidth = 1;
 	ctx.stroke();
 
-	for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
-		for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
-			p = board[x][y];
-			if ((p === 0 ) || (p === -1)) {
-				/* do nothing */
-			} else if (p === 'road') {
+	for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
+		for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
+
+			q = board[y].charAt( x*2 );
+			p = board[y].charAt( x*2 + 1 );
+
+			if ((q === ' ') || (q === '-')) {
+				// do nothing
+			} else if (q === 'r') {
 				ctx.fillStyle = '#808080';
-				ctx.fillRect( xdraw, ydraw, 49, 49 );
+				ctx.fillRect( xdraw, ydraw, 49, 49 );				
+			} else if (q === 'p') {
+				imgdrawat( 'park.png', x, y );
+			} else if (p === 'f') {
+				imgdrawat( q + 'act.png', x, y );
+			} else if (_.contains( playerColors, p )) {
+				if (_.contains( factoryQuadrants, q )) {
+					imgdrawat( q + 'out.png', x, y );
+				}
+				imgdrawat( p + 'mark.png', x, y );
 			} else {
-				imgdrawat( p, x, y );
+				console.log( 'ERROR: impossible case in drawBoard' );
 			}
 		}
+
+		for (var i = 0; i < 5; i++ ) {
+			playerMark = playerTurnOrder[i].color + 'mark';
+			turnString += "<img id='" + playerMark + "' src='" + playerMark + ".png'>" + playerTurnOrder[i].markersRemaining;
+		}
+		$( '#turnorder' ).html( turnString );
+		$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 	}
-	for (i = 0; i < 5; i++ ) {
-		playermark = players[turnorder[i]][0] + 'mark';
-		turnstr += "<img id='" + playermark + "' src='" + playermark + ".png'>" + players[turnorder[i]][1];
-	}
-	$( '#turnorder' ).html( turnstr );
-	$( '#' + playerpiece ).css( 'border', 'solid 3px black' );
 }
 
 function firstmousemove( e ) {
@@ -585,16 +610,16 @@ $( document ).ready( function(){
 
 	ctx = document.getElementById( 'board' ).getContext( '2d' );
 
-	turnOrder = _.shuffle( turnOrder );
+	playerTurnOrder = _.shuffle( playerTurnOrder );
 
 	for (var i = 0; i < 5; i++ ) {
-		playerMarkImg = turnOrder[i].color + 'mark';
-		turnStr += "<img id='" + playerMarkImg + "' src='" + playerMarkImg + ".png'>" + turnOrder[i].markersRemaining;
+		playerMarkImg = playerTurnOrder[i].color + 'mark';
+		turnStr += "<img id='" + playerMarkImg + "' src='" + playerMarkImg + ".png'>" + playerTurnOrder[i].markersRemaining;
 	}
 	$( '#turnorder' ).html( turnStr );
 
-	playerTurn = 0;
-	selectedPieceImg = turnOrder[0].color + 'mark';
+	playerOnTurn = 0;
+	selectedPieceImg = playerTurnOrder[0].color + 'mark';
 	playerPieceImg = selectedPieceImg;
 	$( '#' + selectedPieceImg ).css( 'border', 'solid 3px black' );
 
@@ -611,7 +636,5 @@ $( document ).ready( function(){
 	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
 
-	drawboard();
-});
-
-}());
+	drawBoard();
+} );
