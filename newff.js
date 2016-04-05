@@ -573,11 +573,7 @@ function clickMark( e ) {
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 	var thisPlayer = playerTurnOrder[playerOnTurn];
 
-	function predicate( pt ) {
-		return ((pt.x === xsq) && (pt.y === ysq));
-	}
-
-	if (_.find( adjacentList, predicate )) {
+	if (_.findWhere( adjacentList, { x: xsq, y: ysq } )) {
 		boardHistory.push( board );
 		board = $.extend( true, [], board );
 		board[ ysq ][ xsq ] = selectedPiece;	
