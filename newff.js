@@ -509,7 +509,8 @@ function undo() {
 }
 
 function done() {
-	nextplayer();
+	nextPlayer();
+	drawBoard;
 }
 
 $( document ).ready( function(){
