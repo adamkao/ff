@@ -375,6 +375,28 @@ function drawBoard() {
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 }
 
+function drawBoardFirst() {
+	drawBoard();
+	for (var i = 1; i <= 10; i++) {
+		for (var j = 1; j <= 10; j++) {
+			if (at( board, i, j ) === '  ') {
+				imgDrawAt( 'tar', i, j );
+			}
+		}
+	}
+}
+
+function drawBoardMark() {
+	drawBoard();
+	for (var i = 0; i < adjacentList.length; i++) {
+		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
+	}
+}
+
+function drawBoardPlace () {
+	drawBoard();
+}
+
 function mousemoveFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
@@ -390,6 +412,16 @@ function mousemoveMark( e ) {
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
 	drawBoardMark();
+	if (isEmpty( xsq, ysq )) {
+		imgDrawAt( playerPieceImg, xsq, ysq );
+	}
+}
+
+function mousemovePlace( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+
+	drawBoardPlace();
 	if (isEmpty( xsq, ysq )) {
 		imgDrawAt( playerPieceImg, xsq, ysq );
 	}
@@ -423,24 +455,6 @@ function mousemove( e ) {
 		}
 	} else {
 		console.log( 'ERROR: invalid action' );
-	}
-}
-
-function drawBoardFirst() {
-	drawBoard();
-	for (var i = 1; i <= 10; i++) {
-		for (var j = 1; j <= 10; j++) {
-			if (at( board, i, j ) === '  ') {
-				imgDrawAt( 'tar', i, j );
-			}
-		}
-	}
-}
-
-function drawBoardMark() {
-	drawBoard();
-	for (var i = 0; i < adjacentList.length; i++) {
-		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
 	}
 }
 
