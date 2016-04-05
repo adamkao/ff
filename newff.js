@@ -265,7 +265,7 @@ function checkspec( board, x, y ) {
 	updateadjlist();
 }
 
-function haspieceadjacent( xsq, ysq ) {
+function hasPieceAdjacent( xsq, ysq ) {
 	var np = board[xsq][ysq-1];
 	var ep = board[xsq-1][ysq];
 	var wp = board[xsq+1][ysq];
@@ -279,19 +279,46 @@ function haspieceadjacent( xsq, ysq ) {
 }
 
 function updateAdjacentList() {
-	var i, j, xsq, ysq;
-
 	adjacentList = [];
-	for (i = 1; i <= 10; i++) {
-		for (j = 1; j <= 10; j++) {
-			if ((board[i][j] === 0) && haspieceadjacent( i, j )) {
+	for (var i = 1; i <= 10; i++) {
+		for (var j = 1; j <= 10; j++) {
+			if ((board[i][j] === 0) && hasPieceAdjacent( i, j )) {
 				adjacentList.push( { x: i, y: j } );
 			}
 		}
 	}
 }
 
-function imgdrawat( piece, xsq, ysq ){
+function nextPlayer() {
+	var player;
+
+	playerOnTurn++;
+	if (playerOnTurn === 5) {
+		playerOnTurn = 0;
+		gameTurn++;
+	}
+	player = playerTurnOrder[ playerOnTurn ];
+	selectedPiece = 'm' + player.color;
+	playerPieceImg = player.color + 'mark';
+	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
+	if (player.markersRemaining && (player.markedSpaces.length < 6)) {
+		action = 'mark';
+		if (player.markedSpaces.length) {
+			$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
+			$( '#pickbtn' ).click( pick );			
+		} else {
+			$( '#pick' ).html( '' );	
+		}
+	} else if (adjacentList) {
+		action = 'pick';
+		pick();
+	} else {
+		nextPlayer();
+		console.log( 'TODO: check for end of game' );
+	}
+}
+
+function imgDrawAt( piece, xsq, ysq ){
 	ctx.drawImage( $( '#' + piece )[0], xsq*50 - 45 , ysq*50 - 45 )
 }
 
@@ -324,14 +351,14 @@ function drawBoard() {
 				ctx.fillStyle = '#808080';
 				ctx.fillRect( xdraw, ydraw, 49, 49 );				
 			} else if (q === 'p') {
-				imgdrawat( 'park', x, y );
+				imgDrawAt( 'park', x, y );
 			} else if (p === 'f') {
-				imgdrawat( q + 'fact', x, y );
+				imgDrawAt( q + 'fact', x, y );
 			} else if (_.contains( playerColors, p )) {
 				if (_.contains( factoryQuadrants, q )) {
-					imgdrawat( q + 'out', x, y );
+					imgDrawAt( q + 'out', x, y );
 				}
-				imgdrawat( p + 'mark', x, y );
+				imgDrawAt( p + 'mark', x, y );
 			} else {
 				console.log( 'ERROR: impossible case in drawBoard' );
 			}
@@ -343,6 +370,16 @@ function drawBoard() {
 	}
 	$( '#turnorder' ).html( turnString );
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
+}
+
+function mousemoveMark( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+
+	drawBoard();
+	for (var i = 0; i < adjlist.length; i++) {
+		imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
+	}
 }
 
 function mousemove( e ) {
@@ -358,42 +395,42 @@ function mousemove( e ) {
 
 	drawBoard();
 	if ((at === 0) || ((at !== -1) && (at.substr( 1, 5 )) === 'mark')) {
-		imgdrawat( selpiece,
+		imgDrawAt( selpiece,
 			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
 	}
 	if (action === 'mark') {
 		for (i = 0; i < adjlist.length; i++) {
-			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+			imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
 		}
 	} else if (action === 'pick') {
 		targetlist = players[player][3];
 		for (i = 0; i < targetlist.length; i++) {
-			imgdrawat( 'picktar', targetlist[i][0], targetlist[i][1] )
+			imgDrawAt( 'picktar', targetlist[i][0], targetlist[i][1] )
 		}
 	} else {
 		console.log( 'ERROR: invalid action' );
 	}
 }
 
-function firstDrawBoard() {
+function drawBoardFirst() {
 	drawBoard();
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
 			if (at( board, i, j ) === '  ') {
-				imgdrawat( 'tar', i, j );
+				imgDrawAt( 'tar', i, j );
 			}
 		}
 	}
 }
 
-function firstmousemove( e ) {
+function mousemoveFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
-	firstDrawBoard();
+	drawBoardFirst();
 	if (at( board, xsq, ysq ) === '  ') {
-		imgdrawat( playerPieceImg, xsq, ysq );
+		imgDrawAt( playerPieceImg, xsq, ysq );
 	}
 }
 
@@ -483,37 +520,7 @@ function place( xboard, yboard ) {
 	drawboard();	
 }
 
-
-function nextPlayer() {
-	var player;
-
-	playerOnTurn++;
-	if (playerOnTurn === 5) {
-		playerOnTurn = 0;
-		gameTurn++;
-	}
-	player = playerTurnOrder[ playerOnTurn ];
-	selectedPiece = 'm' + player.color;
-	playerPieceImg = player.color + 'mark';
-	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
-	if (player.markersRemaining && (player.markedSpaces.length < 6)) {
-		action = 'mark';
-		if (player.markedSpaces.length) {
-			$( '#pick' ).html( "<button id='pickbtn'>Pick</button>" );	
-			$( '#pickbtn' ).click( pick );			
-		} else {
-			$( '#pick' ).html( 'foo' );	
-		}
-	} else if (adjacentList) {
-		action = 'pick';
-		pick();
-	} else {
-		nextPlayer();
-		console.log( 'TODO: check for end of game' );
-	}
-}
-
-function firstclick( e ) {
+function clickFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
@@ -560,7 +567,7 @@ function click( e ) {
 			}
 		}
 		for (i = 0; i < adjlist.length; i++) {
-			imgdrawat( 'tar', adjlist[i][0], adjlist[i][1] )
+			imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
 		}
 	} else if (action === 'pick') {
 		targetlist = players[player][3];
@@ -602,9 +609,9 @@ $( document ).ready( function(){
 
 	findRoads( board );
 
-	$( '#board' ).mousemove( firstmousemove );
-	$( '#board' ).mouseleave( firstDrawBoard );	
-	$( '#board' ).click( firstclick );
+	$( '#board' ).mousemove( mousemoveFirst );
+	$( '#board' ).mouseleave( drawBoardFirst );	
+	$( '#board' ).click( clickFirst );
 	$( '#pick' ).html( '' );	
 	$( '#undo' ).click( undo );
 	$( '#done' ).click( done );
