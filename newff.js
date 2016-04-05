@@ -394,7 +394,12 @@ function drawBoardMark() {
 }
 
 function drawBoardPlace () {
+	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
+
 	drawBoard();
+	for (var i = 0; i < placeTargets.length; i++) {
+		imgDrawAt( 'picktar', placeTargets[i].x, placeTargets[i].y );
+	}
 }
 
 function mousemoveFirst( e ) {
@@ -420,128 +425,15 @@ function mousemoveMark( e ) {
 function mousemovePlace( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
-
-	drawBoardPlace();
-	if (isEmpty( xsq, ysq )) {
-		imgDrawAt( playerPieceImg, xsq, ysq );
-	}
-}
-
-function mousemove( e ) {
-	var i, x, y, xsq, ysq, xboard, yboard, at, targetlist = [];
-
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xsq = Math.floor( x/50 );
-	ysq = Math.floor( y/50 );
-	xboard = xsq + 1;
-	yboard = ysq + 1;
-	at = board[xboard][yboard];
+	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
 
 	drawBoard();
-	if ((at === 0) || ((at !== -1) && (at.substr( 1, 5 )) === 'mark')) {
-		imgDrawAt( selpiece,
-			Math.ceil( (e.pageX - this.offsetLeft)/50 ),
-			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
+	if (isEmpty( xsq, ysq ) || (_.findWhere( placeTargets, { x: xsq, y: ysq } ))) {
+		imgDrawAt( 'park', xsq, ysq );
 	}
-	if (action === 'mark') {
-		for (i = 0; i < adjacentList.length; i++) {
-			imgDrawAt( 'tar', adjacentList[i][0], adjacentList[i][1] )
-		}
-	} else if (action === 'pick') {
-		targetlist = players[player][3];
-		for (i = 0; i < targetlist.length; i++) {
-			imgDrawAt( 'picktar', targetlist[i][0], targetlist[i][1] )
-		}
-	} else {
-		console.log( 'ERROR: invalid action' );
+	for (var i = 0; i < placeTargets.length; i++) {
+		imgDrawAt( 'picktar', placeTargets[i].x, placeTargets[i].y );
 	}
-}
-
-function pick() {
-	var tile = 'park';
-	var r = Math.floor( Math.random() * emptyremaining );
-	var outletsremaining = players[player][2];
-	if (r < outletsremaining.length) {
-		tile = outletsremaining[r];
-	}
-	action = 'pick';
-	$( '#pick' ).html( "<img src='" + tile + ".png'>" );
-	selpiece = tile;
-}
-
-function undo() {
-}
-
-function done() {
-	selpiece = players[player][0] + 'mark';
-	playerpiece = selpiece;
-	$( '#' + playerpiece ).css( 'border', 'solid 3px white' );
-	if (action === 'mark') {
-		players[player][1]--;
-	} else if (action === 'pick') {
-		console.log( 'TODO: place tile' );
-	} else {
-		console.log( 'ERROR: invalid action' );
-	}
-	nextplayer();
-}
-
-function place( xboard, yboard ) {
-	var xboard, yboard, testx, testy, type, s;
-
-	boardhistory.push( board );
-	board = $.extend( true, [], board );
-
-	if (selpiece === 'park') {
-		board[xboard][yboard] = 'park';
-		emptyremaining--;
-	} else if (selpiece.substring( 2, 5 ) === 'out') {
-		board[xboard][yboard] = selpiece;
-		emptyremaining--;
-		checkspec( board, xboard, yboard );
-	}
-
-	findroads( board );
-
-	testx = xboard - 1;
-	testy = yboard;
-	type = board[testx][testy];
-	if ((type !== 0) && (type !== -1)) {
-		s = type.substring( 2, 5 );
-		if ((s === 'out') || (s === 'act')) {
-			checkspec( board, testx, testy );
-		}
-	}
-	testx = xboard + 1;
-	testy = yboard;
-	type = board[testx][testy];
-	if ((type !== 0) && (type !== -1)) {
-		s = type.substring( 2, 5 );
-		if ((s === 'out') || (s === 'act')) {
-			checkspec( board, testx, testy );
-		}
-	}
-	testx = xboard;
-	testy = yboard - 1;
-	type = board[testx][testy];
-	if ((type !== 0) && (type !== -1)) {
-		s = type.substring( 2, 5 );
-		if ((s === 'out') || (s === 'act')) {
-			checkspec( board, testx, testy );
-		}
-	}
-	testx = xboard;
-	testy = yboard + 1;
-	type = board[testx][testy];
-	if ((type !== 0) && (type !== -1)) {
-		s = type.substr( 2, 5 );
-		if ((s === 'out') || (s === 'act')) {
-			checkspec( board, testx, testy );
-		}
-	}
-
-	drawboard();	
 }
 
 function clickFirst( e ) {
@@ -592,45 +484,32 @@ function clickMark( e ) {
 	}
 }
 
-function click( e ) {
-	var x, y, xboard, yboard, targetlist = [];
+function clickPlace( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
 
-	x = e.pageX - this.offsetLeft;
-	y = e.pageY - this.offsetTop;
-	xboard = Math.floor( x/50 ) + 1;
-	yboard = Math.floor( y/50 ) + 1;
+	if (_.findWhere( placeTargets, { x: xsq, y: ysq } )) {
+		console.log( 'TODO: place a bldg' );
+	}
+}
 
-	if (turn === 1) {
-	}
-	if (action === 'mark') {
-		if (findonlist( adjlist, xboard, yboard )) {
-			boardhistory.push( board );
-			board = $.extend( true, [], board );
-			board[xboard][yboard] = selpiece;	
-			if (players[player][1]) {
-				players[player][3].push( [xboard, yboard] );
-				players[player][1]--;
-			} else {
-				console.log( 'tried to mark with none left' );
-			}
-		}
-		for (i = 0; i < adjlist.length; i++) {
-			imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
-		}
-	} else if (action === 'pick') {
-		targetlist = players[player][3];
-		if (!findonlist( targetlist, xboard, yboard )) {
-			return;
-		}
-		place( xboard, yboard );
-		players[player][3] = removefromlist( players[player][3], xboard, yboard );
-		players[player][1]++;
-	} else {
-		console.log( 'invalid action');
-	}
+function pick() {
+	$( '#pick' ).html( "<img src='park.png'>" );
+	selectedPiece = 'pk';
+	$( '#board' ).off( 'mousemove' );		
+	$( '#board' ).mousemove( mousemovePlace );
+	$( '#board' ).off( 'click' );		
+	$( '#board' ).click( clickPlace );
+	$( '#board' ).off( 'mouseleave' );		
+	$( '#board' ).mouseleave( drawBoardPlace );
+}
+
+function undo() {
+}
+
+function done() {
 	nextplayer();
-	updateadjlist();
-	drawboard();
 }
 
 $( document ).ready( function(){
