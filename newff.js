@@ -54,11 +54,13 @@ players = {
 playerTurnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 
 function at( board, x, y ) {
-	return board[y][x];
+	return (board[y][x]);
 }
+
 function put( board, x, y, label ) {
 	board[y][x] = label;
 }
+
 function findonlist( list, xsq, ysq ) {
 	var i = 0;
 
@@ -99,7 +101,7 @@ function removeNameFromList( list, name ) {
 }
 
 function isRoad( x, y ) {
-	return (board[y][x] === 'rd');
+	return (board[y][x] === 'oo');
 }
 
 function isMarker( x, y ) {
@@ -112,6 +114,20 @@ function isEmpty( x, y ) {
 
 function isFillable( x, y ) {
 	return (isRoad( x, y ) || isMarker( x, y ) || isEmpty( x, y ));
+}
+
+function isPiece( x, y ) {
+	var p = board[y][x];
+	return ((p !== '  ') && (p !== '--'));
+}
+
+function hasPieceAdjacent( xsq, ysq ) {
+	return (
+		isPiece( xsq, ysq - 1 ) ||
+		isPiece( xsq - 1, ysq ) ||
+		isPiece( xsq + 1, ysq ) ||
+		isPiece( xsq, ysq + 1 )
+		);
 }
 
 function fillTest( tempboard, testx, testy, front ) {
@@ -265,24 +281,11 @@ function checkspec( board, x, y ) {
 	updateadjlist();
 }
 
-function hasPieceAdjacent( xsq, ysq ) {
-	var np = board[xsq][ysq-1];
-	var ep = board[xsq-1][ysq];
-	var wp = board[xsq+1][ysq];
-	var sp = board[xsq][ysq+1];
-	return (
-		((np !== 0) && (np !== -1)) ||
-		((ep !== 0) && (ep !== -1)) ||
-		((wp !== 0) && (wp !== -1)) ||
-		((sp !== 0) && (sp !== -1))
-		)
-}
-
 function updateAdjacentList() {
 	adjacentList = [];
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
-			if ((board[i][j] === 0) && hasPieceAdjacent( i, j )) {
+			if (isEmpty( i, j ) && hasPieceAdjacent( i, j )) {
 				adjacentList.push( { x: i, y: j } );
 			}
 		}
@@ -372,13 +375,23 @@ function drawBoard() {
 	$( '#' + playerPieceImg ).css( 'border', 'solid 3px black' );
 }
 
+function mousemoveFirst( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+
+	drawBoardFirst();
+	if (isEmpty( xsq, ysq )) {
+		imgDrawAt( playerPieceImg, xsq, ysq );
+	}
+}
+
 function mousemoveMark( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
-	drawBoard();
-	for (var i = 0; i < adjlist.length; i++) {
-		imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
+	drawBoardMark();
+	if (isEmpty( xsq, ysq )) {
+		imgDrawAt( playerPieceImg, xsq, ysq );
 	}
 }
 
@@ -400,8 +413,8 @@ function mousemove( e ) {
 			Math.ceil( (e.pageY - this.offsetTop)/50 ) );
 	}
 	if (action === 'mark') {
-		for (i = 0; i < adjlist.length; i++) {
-			imgDrawAt( 'tar', adjlist[i][0], adjlist[i][1] )
+		for (i = 0; i < adjacentList.length; i++) {
+			imgDrawAt( 'tar', adjacentList[i][0], adjacentList[i][1] )
 		}
 	} else if (action === 'pick') {
 		targetlist = players[player][3];
@@ -424,13 +437,10 @@ function drawBoardFirst() {
 	}
 }
 
-function mousemoveFirst( e ) {
-	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
-
-	drawBoardFirst();
-	if (at( board, xsq, ysq ) === '  ') {
-		imgDrawAt( playerPieceImg, xsq, ysq );
+function drawBoardMark() {
+	drawBoard();
+	for (var i = 0; i < adjacentList.length; i++) {
+		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
 	}
 }
 
@@ -524,7 +534,7 @@ function clickFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 
-	if (at( board, xsq, ysq ) === '  ') {
+	if (isEmpty( xsq, ysq )) {
 		boardHistory.push( board );
 		board = $.extend( true, [], board );
 		put( board, xsq, ysq, selectedPiece );
@@ -534,13 +544,37 @@ function clickFirst( e ) {
 	nextPlayer();
 	if (gameTurn === 2) {
 		$( '#board' ).off( 'mousemove' );		
-		$( '#board' ).mousemove( mousemove );
+		$( '#board' ).mousemove( mousemoveMark );
 		$( '#board' ).off( 'click' );		
-		$( '#board' ).click( click );
+		$( '#board' ).click( clickMark );
 		$( '#board' ).off( 'mouseleave' );		
-		$( '#board' ).mouseleave( drawBoard );
+		$( '#board' ).mouseleave( drawBoardMark );
 		updateAdjacentList();
 	}
+	drawBoard();
+}
+
+function clickMark( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var thisPlayer = playerTurnOrder[playerOnTurn];
+
+	if (findonlist( adjacentList, xsq, ysq )) {
+		boardhistory.push( board );
+		board = $.extend( true, [], board );
+		board[ ysq ][ xsq ] = selpiece;	
+		if (thisPlayer.markersRemaining) {
+			thisPlayer.markedSpaces.push( { x: xsq, y: ysq } );
+			thisPlayer.markersRemaining--;
+		} else {
+			console.log( 'ERROR: tried to mark with none left' );
+		}
+	}
+	for (var i = 0; i < adjacentList.length; i++) {
+		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
+	}
+	nextPlayer();
+	updateAdjacentList();
 	drawBoard();
 }
 
