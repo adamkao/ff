@@ -573,13 +573,20 @@ function clickMark( e ) {
 	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
 	var thisPlayer = playerTurnOrder[playerOnTurn];
 
-	if (findonlist( adjacentList, xsq, ysq )) {
-		boardhistory.push( board );
+	function predicate( pt ) {
+		return ((pt.x === xsq) && (pt.y === ysq));
+	}
+
+	if (_.find( adjacentList, predicate )) {
+		boardHistory.push( board );
 		board = $.extend( true, [], board );
-		board[ ysq ][ xsq ] = selpiece;	
+		board[ ysq ][ xsq ] = selectedPiece;	
 		if (thisPlayer.markersRemaining) {
 			thisPlayer.markedSpaces.push( { x: xsq, y: ysq } );
 			thisPlayer.markersRemaining--;
+			nextPlayer();
+			updateAdjacentList();
+			drawBoard();
 		} else {
 			console.log( 'ERROR: tried to mark with none left' );
 		}
@@ -587,9 +594,6 @@ function clickMark( e ) {
 	for (var i = 0; i < adjacentList.length; i++) {
 		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
 	}
-	nextPlayer();
-	updateAdjacentList();
-	drawBoard();
 }
 
 function click( e ) {
