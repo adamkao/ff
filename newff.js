@@ -2,8 +2,8 @@
 
 var ctx;
 var selectedPiece = '', playerPieceImg = '', action = 'mark';
-var playerColors = [ 'r', 'g', 'b', 'c', 'm' ];
-var factoryQuadrants = [ 'a', 'b', 'c', 'd' ];
+var colors = [ 'r', 'g', 'b', 'c', 'm' ];
+var quadrants = [ 'a', 'b', 'c', 'd' ];
 var players = {}, playerTurnOrder = [], playerOnTurn = 0, gameTurn = 1;
 /*
 board squares are labeled with two chars.
@@ -53,80 +53,49 @@ players = {
 };
 playerTurnOrder = [ players.r, players.g, players.b, players.c, players.m ];
 
-function at( board, x, y ) {
-	return (board[y][x]);
+function at( board, pt ) {
+	return (board[ pt.y ][ pt.x ]);
 }
 
-function put( board, x, y, label ) {
-	board[y][x] = label;
+function put( board, pt, label ) {
+	board[ pt.y ][ pt.x ] = label;
 }
 
-function findonlist( list, xsq, ysq ) {
-	var i = 0;
-
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if ((list[i][0] === xsq) && (list[i][1] === ysq)) {
-				return true;
-			}
-		}
-	}
-	return false
+function isRoad( pt ) {
+	return (board[ pt.y ][ pt.x ] === 'oo');
 }
 
-function removefromlist( list, xsq, ysq ) {
-	var i = 0, ret = [];
-
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if ((list[i][0] !== xsq) || (list[i][1] !== ysq)) {
-				ret.push( [list[i][0], list[i][1]] );
-			};
-		}
-	}
-	return ret;
+function isMarker( pt ) {
+	return (board[ pt.y ][ pt.x ].slice( 1, 2 ) === 'm' );
 }
 
-function removeNameFromList( list, name ) {
-	var i = 0, ret = [];
-
-	if (list) {
-		for (i = 0; i < list.length; i++) {
-			if (list[i] !== name) {
-				ret.push( name );
-			};
-		}
-	}
-	return ret;
+function isEmpty( pt ) {
+	return (board[ pt.y ][ pt.x ] === '  ');
 }
 
-function isRoad( x, y ) {
-	return (board[y][x] === 'oo');
+function isFillable( pt ) {
+	return (isRoad( pt ) || isMarker( pt ) || isEmpty( pt ));
 }
 
-function isMarker( x, y ) {
-	return (board[y][x].slice( 1, 2 ) === 'm' );
+function isSpecial( pt ) {
+	return (_.contains( quadrants, at( board, pt ).slice( 0, 1 ) ));
 }
 
-function isEmpty( x, y ) {
-	return (board[y][x] === '  ');
+function isBuilding( pt ) {
+	return ((board[ pt.y ][ pt.x ] === 'pk') || isSpecial( pt ));
 }
 
-function isFillable( x, y ) {
-	return (isRoad( x, y ) || isMarker( x, y ) || isEmpty( x, y ));
-}
-
-function isPiece( x, y ) {
-	var p = board[y][x];
+function isPiece( pt ) {
+	var p = at( board, pt );
 	return ((p !== '  ') && (p !== '--'));
 }
 
 function hasPieceAdjacent( xsq, ysq ) {
 	return (
-		isPiece( xsq, ysq - 1 ) ||
-		isPiece( xsq - 1, ysq ) ||
-		isPiece( xsq + 1, ysq ) ||
-		isPiece( xsq, ysq + 1 )
+		isPiece( { x: xsq, y: ysq - 1 } ) ||
+		isPiece( { x: xsq - 1, y: ysq } ) ||
+		isPiece( { x: xsq + 1, y: ysq } ) ||
+		isPiece( { x: xsq, y: ysq + 1 } )
 		);
 }
 
@@ -210,82 +179,65 @@ function findRoads( board ) {
 	*/
 }
 
-function hasmarker( at ) {
-	if (at === 0) {
-		return false;
-	} else if (at === -1) {
-		return false;
-	} else if (at.substring( 1, 5 ) === 'mark') {
-		return true;
-	} else {
-		return false;
+function markerToRoad( pt ) {
+
+	function predicate( testpt ) {
+		return ((pt.x === testpt.x) && (pt.y === testpt.y));
 	}
-}
-
-function checkspec( board, x, y ) {
-	var	adjcount, nadj, eadj, wadj, sadj;
-
-	nadj = board[x][y - 1];
-	eadj = board[x + 1][y];
-	wadj = board[x - 1][y];
-	sadj = board[x][y + 1];
-
-	adjcount = (
-		(((nadj !== 'road') && (nadj !== 0)) && !hasmarker( nadj ))
-		+ (((eadj !== 'road') && (eadj !== 0)) && !hasmarker( eadj ))
-		+ (((wadj !== 'road') && (wadj !== 0)) && !hasmarker( wadj ))
-		+ (((sadj !== 'road') && (sadj !== 0)) && !hasmarker( sadj ))
-		);
-
-	if (adjcount === 3) {
-		if ((nadj === 0) || hasmarker( nadj )) {
-			board[x][y - 1] = 'road';
-			emptyremaining--;			
-			for (i = 0; i < 5; i++) {
-				if (findonlist( players[i][3], x, y - 1 )) {
-					players[i][3] = removefromlist( players[i][3], x, y - 1 );
-					players[i][1]++
-				}
-			}
-		} else if ((eadj === 0) || hasmarker( eadj )) {
-			board[x + 1][y] = 'road';
-			emptyremaining--;
-			for (i = 0; i < 5; i++) {
-				if (findonlist( players[i][3], x + 1, y )) {
-					players[i][3] = removefromlist( players[i][3], x + 1, y );
-					players[i][1]++
-				}
-			}
-		} else if ((wadj === 0) || hasmarker( wadj )) {
-			board[x - 1][y] = 'road';
-			emptyremaining--;
-			for (i = 0; i < 5; i++) {
-				if (findonlist( players[i][3], x - 1, y )) {
-					players[i][3] = removefromlist( players[i][3], x - 1, y );
-					players[i][1]++
-				}
-			}
-		} else if ((sadj === 0) || hasmarker( sadj )) {
-			board[x][y + 1] = 'road';
-			emptyremaining--;
-			for (i = 0; i < 5; i++) {
-				if (findonlist( players[i][3], x, y + 1 )) {
-					players[i][3] = removefromlist( players[i][3], x, y + 1 );
-					players[i][1]++
-				}
-			}
-		} else {
-			console.log( 'ERROR: impossible case in checkspec' );
+	for (var i = 0; i < 5; i++) {
+		if (_.findWhere( playerTurnOrder[i].markedSpaces, pt )) {
+			playerTurnOrder[i].markedSpaces = _.reject( playerTurnOrder[i].markedSpaces);
+			playerTurnOrder[i].markersRemaining++;
+			return;
 		}
 	}
-	updateadjlist();
+	console.log( 'ERROR: no marker found in markerToRoad()' );
+}
+
+function checkSpecial( board, x, y ) {
+	var nPt = { x: x, y: y - 1 };
+	var ePt = { x: x + 1, y: y };
+	var wPt = { x: x - 1, y: y };
+	var sPt = { x: x, y: y + 1 };
+	var adjCount = isBuilding( nPt ) + isBuilding( ePt ) + isBuilding( wPt ) + isBuilding( sPt );
+
+	if (adjCount === 3) {
+		if (isEmpty( nPt ) || isMarker( nPt )) {
+			put( board, nPt, 'oo');
+			emptySquaresRemaining--;
+			if (isMarker( nPt )) {
+				markerToRoad( nPt );
+			}
+		} else if (isEmpty( ePt ) || isMarker( ePt )) {
+			put( board, ePt, 'oo');
+			emptySquaresRemaining--;
+			if (isMarker( ePt )) {
+				markerToRoad( ePt );
+			}
+		} else if (isEmpty( wPt ) || isMarker( wPt )) {
+			put( board, wPt, 'oo');
+			emptySquaresRemaining--;
+			if (isMarker( wPt )) {
+				markerToRoad( wPt );
+			}
+		} else if (isEmpty( sPt ) || isMarker( sPt )) {
+			put( board, sPt, 'oo');
+			emptySquaresRemaining--;
+			if (isMarker( sPt )) {
+				markerToRoad( sPt );
+			}
+		} else {
+			console.log( 'ERROR: impossilbe case in checkSpecial()' );
+		}
+	}
+	updateAdjacentList();
 }
 
 function updateAdjacentList() {
 	adjacentList = [];
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
-			if (isEmpty( i, j ) && hasPieceAdjacent( i, j )) {
+			if (isEmpty( { x: i, y: j } ) && hasPieceAdjacent( i, j )) {
 				adjacentList.push( { x: i, y: j } );
 			}
 		}
@@ -345,8 +297,8 @@ function drawBoard() {
 	for (y = 1, ydraw = 1; y <= 10; y++, ydraw += 50) {
 		for (x = 1, xdraw = 1; x <= 10; x++, xdraw += 50) {
 
-			q = at( board, x, y ).charAt( 0 );
-			p = at( board, x, y ).charAt( 1 );
+			q = at( board, { x: x, y: y } ).charAt( 0 );
+			p = at( board, { x: x, y: y } ).charAt( 1 );
 
 			if ((q === ' ') || (q === '-')) {
 				// do nothing
@@ -357,8 +309,8 @@ function drawBoard() {
 				imgDrawAt( 'park', x, y );
 			} else if (p === 'f') {
 				imgDrawAt( q + 'fact', x, y );
-			} else if (_.contains( playerColors, p )) {
-				if (_.contains( factoryQuadrants, q )) {
+			} else if (_.contains( colors, p )) {
+				if (_.contains( quadrants, q )) {
 					imgDrawAt( q + 'out', x, y );
 				}
 				imgDrawAt( p + 'mark', x, y );
@@ -379,7 +331,7 @@ function drawBoardFirst() {
 	drawBoard();
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
-			if (at( board, i, j ) === '  ') {
+			if (at( board, { x: i, y: j } ) === '  ') {
 				imgDrawAt( 'tar', i, j );
 			}
 		}
@@ -404,32 +356,32 @@ function drawBoardPlace () {
 
 function mousemoveFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
 	drawBoardFirst();
-	if (isEmpty( xsq, ysq )) {
-		imgDrawAt( playerPieceImg, xsq, ysq );
+	if (isEmpty( pt )) {
+		imgDrawAt( playerPieceImg, pt.x, pt.y );
 	}
 }
 
 function mousemoveMark( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
 	drawBoardMark();
-	if (isEmpty( xsq, ysq )) {
-		imgDrawAt( playerPieceImg, xsq, ysq );
+	if (isEmpty( pt )) {
+		imgDrawAt( playerPieceImg, pt.x, pt.y );
 	}
 }
 
 function mousemovePlace( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
 
 	drawBoard();
-	if (isEmpty( xsq, ysq ) || (_.findWhere( placeTargets, { x: xsq, y: ysq } ))) {
-		imgDrawAt( 'park', xsq, ysq );
+	if (isEmpty( pt ) || (_.findWhere( placeTargets, pt ))) {
+		imgDrawAt( 'park', pt.x, pt.y );
 	}
 	for (var i = 0; i < placeTargets.length; i++) {
 		imgDrawAt( 'picktar', placeTargets[i].x, placeTargets[i].y );
@@ -438,14 +390,14 @@ function mousemovePlace( e ) {
 
 function clickFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
-	if (isEmpty( xsq, ysq )) {
+	if (isEmpty( pt )) {
 		boardHistory.push( board );
 		board = $.extend( true, [], board );
-		put( board, xsq, ysq, selectedPiece );
+		put( board, pt, selectedPiece );
 		playerTurnOrder[playerOnTurn].markersRemaining--;
-		playerTurnOrder[playerOnTurn].markedSpaces.push( { x: xsq, y: ysq } );
+		playerTurnOrder[playerOnTurn].markedSpaces.push( pt );
 	}
 	nextPlayer();
 	if (gameTurn === 2) {
@@ -462,23 +414,25 @@ function clickFirst( e ) {
 
 function clickMark( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 	var thisPlayer = playerTurnOrder[playerOnTurn];
 
-	if (_.findWhere( adjacentList, { x: xsq, y: ysq } )) {
-		boardHistory.push( board );
-		board = $.extend( true, [], board );
-		board[ ysq ][ xsq ] = selectedPiece;	
-		if (thisPlayer.markersRemaining) {
-			thisPlayer.markedSpaces.push( { x: xsq, y: ysq } );
-			thisPlayer.markersRemaining--;
-			nextPlayer();
-			updateAdjacentList();
-			drawBoard();
-		} else {
-			console.log( 'ERROR: tried to mark with none left' );
-		}
+	if (!_.findWhere( adjacentList, pt )) {
+		return;
 	}
+
+	boardHistory.push( board );
+	board = $.extend( true, [], board );
+
+	put( board, pt, selectedPiece );
+	if (thisPlayer.markersRemaining) {
+		thisPlayer.markedSpaces.push( pt );
+		thisPlayer.markersRemaining--;
+		nextPlayer();
+		updateAdjacentList();
+		drawBoard();
+	}
+
 	for (var i = 0; i < adjacentList.length; i++) {
 		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
 	}
@@ -486,12 +440,38 @@ function clickMark( e ) {
 
 function clickPlace( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
-	var xsq = Math.ceil( x/50 ), ysq = Math.ceil( y/50 );
-	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
+	var testPt = { x: 0, y: 0 };
 
-	if (_.findWhere( placeTargets, { x: xsq, y: ysq } )) {
-		console.log( 'TODO: place a bldg' );
+	if (!_.findWhere( playerTurnOrder[playerOnTurn].markedSpaces, pt )) {
+		return;
 	}
+
+	boardHistory.push( board );
+	board = $.extend( true, [], board );
+
+	put( board, pt, 'pk' );
+	emptySquaresRemaining--;
+
+	findRoads( board );
+
+	testPt = { x: pt.x - 1, y: pt.y };
+	if  (isSpecial( testPt )) {
+		checkSpecial( board, testPt.x, testPt.y );
+	}
+	testPt = { x: pt.x + 1, y: pt.y };
+	if  (isSpecial( testPt )) {
+		checkSpecial( board, testPt.x, testPt.y );
+	}
+	testPt = { x: pt.x, y: pt.y - 1 };
+	if  (isSpecial( testPt )) {
+		checkSpecial( board, testPt.x, testPt.y );
+	}
+	testPt = { x: pt.x, y: pt.y + 1 };
+	if  (isSpecial( testPt )) {
+		checkSpecial( board, testPt.x, testPt.y );
+	}
+	drawBoard();	
 }
 
 function pick() {
