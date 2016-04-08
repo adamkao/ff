@@ -82,7 +82,7 @@ function isSpecial( board, pt ) {
 }
 
 function isBuilding( board, pt ) {
-	return ((board[ pt.y ][ pt.x ] === 'pk') || isSpecial( pt ));
+	return ((board[ pt.y ][ pt.x ] === 'pk') || isSpecial( board, pt ));
 }
 
 function isPiece( board, pt ) {
@@ -194,7 +194,12 @@ function checkSpecial( board, x, y ) {
 	var ePt = { x: x + 1, y: y };
 	var wPt = { x: x - 1, y: y };
 	var sPt = { x: x, y: y + 1 };
-	var adjCount = isBuilding( nPt ) + isBuilding( ePt ) + isBuilding( wPt ) + isBuilding( sPt );
+	var adjCount = (
+		(isBuilding( board, nPt ) || (at( board, nPt ) === '--')) +
+		(isBuilding( board, ePt ) || (at( board, ePt ) === '--')) +
+		(isBuilding( board, wPt ) || (at( board, wPt ) === '--')) +
+		(isBuilding( board, sPt ) || (at( board, sPt ) === '--'))
+	);
 
 	if (adjCount === 3) {
 		if (isEmpty( board, nPt ) || isMarker( board, nPt )) {
@@ -216,7 +221,7 @@ function checkSpecial( board, x, y ) {
 				markerToRoad( board, wPt );
 			}
 		} else if (isEmpty( board, sPt ) || isMarker( board, sPt )) {
-			put( board, board, sPt, 'oo');
+			put( board, sPt, 'oo');
 			emptySquaresRemaining--;
 			if (isMarker( board, sPt )) {
 				markerToRoad( board, sPt );
