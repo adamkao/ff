@@ -61,57 +61,57 @@ function put( board, pt, label ) {
 	board[ pt.y ][ pt.x ] = label;
 }
 
-function isRoad( pt ) {
+function isRoad( board, pt ) {
 	return (board[ pt.y ][ pt.x ] === 'oo');
 }
 
-function isMarker( pt ) {
-	return (board[ pt.y ][ pt.x ].slice( 1, 2 ) === 'm' );
+function isMarker( board, pt ) {
+	return (board[ pt.y ][ pt.x ].charAt( 0 ) === 'm' );
 }
 
-function isEmpty( pt ) {
+function isEmpty( board, pt ) {
 	return (board[ pt.y ][ pt.x ] === '  ');
 }
 
-function isFillable( pt ) {
-	return (isRoad( pt ) || isMarker( pt ) || isEmpty( pt ));
+function isFillable( board, pt ) {
+	return (isRoad( board, pt ) || isMarker( board, pt ) || isEmpty( board, pt ));
 }
 
-function isSpecial( pt ) {
+function isSpecial( board, pt ) {
 	return (_.contains( quadrants, at( board, pt ).slice( 0, 1 ) ));
 }
 
-function isBuilding( pt ) {
+function isBuilding( board, pt ) {
 	return ((board[ pt.y ][ pt.x ] === 'pk') || isSpecial( pt ));
 }
 
-function isPiece( pt ) {
+function isPiece( board, pt ) {
 	var p = at( board, pt );
 	return ((p !== '  ') && (p !== '--'));
 }
 
-function hasPieceAdjacent( xsq, ysq ) {
+function hasPieceAdjacent( board, xsq, ysq ) {
 	return (
-		isPiece( { x: xsq, y: ysq - 1 } ) ||
-		isPiece( { x: xsq - 1, y: ysq } ) ||
-		isPiece( { x: xsq + 1, y: ysq } ) ||
-		isPiece( { x: xsq, y: ysq + 1 } )
+		isPiece( board, { x: xsq, y: ysq - 1 } ) ||
+		isPiece( board, { x: xsq - 1, y: ysq } ) ||
+		isPiece( board, { x: xsq + 1, y: ysq } ) ||
+		isPiece( board, { x: xsq, y: ysq + 1 } )
 		);
 }
 
-function fillTest( tempboard, testx, testy, front ) {
-	if (isFillable( testx, testy )) {
-		tempboard[ testy ][ testx ] = 'fl';
+function fillTest( tempBoard, testx, testy, front ) {
+	if (isFillable( tempBoard, { x: testx, y: testy } )) {
+		tempBoard[ testy ][ testx ] = 'fl';
 		front.push( { x: testx, y: testy } );
 	}
 }
 
 // flood fill algorithm
-function flood( tempboard, x, y ) {
+function flood( tempBoard, x, y ) {
 	var front, oldFront;
 
 	front = [];
-	filltest( tempBoard, x, y, front );
+	fillTest( tempBoard, x, y, front );
 
 	oldFront = front;
 	front = [];
@@ -132,8 +132,9 @@ function flood( tempboard, x, y ) {
 function findFillable( bd, pt ) {
 	for (var x = 1; x <= 10; x++) {
 		for (var y = 1; y <= 10; y++) {
-			if (isFillable( x, y )) {
-				pt = { x: x, y: y };
+			if (isFillable( bd, { x: x, y: y } )) {
+				pt.x = x;
+				pt.y = y;
 				return pt;
 			}
 		}
@@ -141,42 +142,36 @@ function findFillable( bd, pt ) {
 }
 
 // test a square to see if it should be a road:  block it, flood fill an area, and see if any squares are not flooded
-function testRoad( x, y ) {
-	var pt = { x: x, y: y };
+function testRoad( pt ) {
 	var tempBoard = $.extend( true, [], board );
+	var tempPt = { x: 0, y: 0 };
 
-	tempBoard[y][x] = 'pk';
-	findFillable( tempboard, pt );
-	flood( tempboard, pt.x, pt.y );
-	findFillable( tempboard, pt );
+	tempBoard[ pt.y ][ pt.x ] = 'pk';
+	findFillable( tempBoard, tempPt );
+	flood( tempBoard, tempPt.x, tempPt.y );
+	tempPt = { x: 0, y: 0 };
+	findFillable( tempBoard, tempPt );
 
-	return (pt.x || pt.y);
+	return (tempPt.x || tempPt.y);
 }
 
 function findRoads( board ) {
-/*
-	var at = '';
+	var pt;
 	for (var x = 1; x <= 10; x++) {
 		for (var y = 1; y <= 10; y++) {
-			at = board[x][y];
-			if ((at === '  ') || (at.substr( 1, 1 ) === 'm')) {
-				if ((at === 0) || ((at !== -1) && at.substr( 1, 5 ) === 'mark')) {
-					if (testRoad( x, y )) {
-						board[x][y] = 'rd';
-						emptySquaresRemaining--;					
-						for (var i = 0; i < 5; i++) {
-							if (findonlist( players[i][3], x, y )) {
-								players[i][3] = removefromlist( players[i][3], x, y );
-								players[i][1]++
-							}
-						}
-					}
+			pt = { x: x, y: y };
+			if (isEmpty( board, pt ) || isMarker( board, pt )) {
+				if (testRoad( pt )) {
+					put( board, pt, 'oo' );
+					emptySquaresRemaining--;
+					if (isMarker( board, pt )) {
+						markerToRoad( { x: x, y: y });
+					}	
 				}
 			}
 		}
-		updateadjlist();
 	}
-	*/
+	updateAdjacentList();
 }
 
 function markerToRoad( pt ) {
@@ -202,29 +197,29 @@ function checkSpecial( board, x, y ) {
 	var adjCount = isBuilding( nPt ) + isBuilding( ePt ) + isBuilding( wPt ) + isBuilding( sPt );
 
 	if (adjCount === 3) {
-		if (isEmpty( nPt ) || isMarker( nPt )) {
+		if (isEmpty( board, nPt ) || isMarker( board, nPt )) {
 			put( board, nPt, 'oo');
 			emptySquaresRemaining--;
-			if (isMarker( nPt )) {
+			if (isMarker( board, nPt )) {
 				markerToRoad( nPt );
 			}
-		} else if (isEmpty( ePt ) || isMarker( ePt )) {
+		} else if (isEmpty( board, ePt ) || isMarker( board, ePt )) {
 			put( board, ePt, 'oo');
 			emptySquaresRemaining--;
-			if (isMarker( ePt )) {
-				markerToRoad( ePt );
+			if (isMarker( board, ePt )) {
+				markerToRoad( board, ePt );
 			}
-		} else if (isEmpty( wPt ) || isMarker( wPt )) {
+		} else if (isEmpty( board, wPt ) || isMarker( board, wPt )) {
 			put( board, wPt, 'oo');
 			emptySquaresRemaining--;
-			if (isMarker( wPt )) {
-				markerToRoad( wPt );
+			if (isMarker( board, wPt )) {
+				markerToRoad( board, wPt );
 			}
-		} else if (isEmpty( sPt ) || isMarker( sPt )) {
-			put( board, sPt, 'oo');
+		} else if (isEmpty( board, sPt ) || isMarker( board, sPt )) {
+			put( board, board, sPt, 'oo');
 			emptySquaresRemaining--;
-			if (isMarker( sPt )) {
-				markerToRoad( sPt );
+			if (isMarker( board, sPt )) {
+				markerToRoad( board, sPt );
 			}
 		} else {
 			console.log( 'ERROR: impossilbe case in checkSpecial()' );
@@ -237,7 +232,7 @@ function updateAdjacentList() {
 	adjacentList = [];
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
-			if (isEmpty( { x: i, y: j } ) && hasPieceAdjacent( i, j )) {
+			if (isEmpty( board, { x: i, y: j } ) && hasPieceAdjacent( board, i, j )) {
 				adjacentList.push( { x: i, y: j } );
 			}
 		}
@@ -359,7 +354,7 @@ function mousemoveFirst( e ) {
 	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
 	drawBoardFirst();
-	if (isEmpty( pt )) {
+	if (isEmpty( board, pt )) {
 		imgDrawAt( playerPieceImg, pt.x, pt.y );
 	}
 }
@@ -369,7 +364,7 @@ function mousemoveMark( e ) {
 	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
 	drawBoardMark();
-	if (isEmpty( pt )) {
+	if (isEmpty( board, pt )) {
 		imgDrawAt( playerPieceImg, pt.x, pt.y );
 	}
 }
@@ -380,7 +375,7 @@ function mousemovePlace( e ) {
 	var placeTargets = playerTurnOrder[playerOnTurn].markedSpaces;
 
 	drawBoard();
-	if (isEmpty( pt ) || (_.findWhere( placeTargets, pt ))) {
+	if (isEmpty( board, pt ) || (_.findWhere( placeTargets, pt ))) {
 		imgDrawAt( 'park', pt.x, pt.y );
 	}
 	for (var i = 0; i < placeTargets.length; i++) {
@@ -392,7 +387,7 @@ function clickFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
-	if (isEmpty( pt )) {
+	if (isEmpty( board, pt )) {
 		boardHistory.push( board );
 		board = $.extend( true, [], board );
 		put( board, pt, selectedPiece );
@@ -456,19 +451,19 @@ function clickPlace( e ) {
 	findRoads( board );
 
 	testPt = { x: pt.x - 1, y: pt.y };
-	if  (isSpecial( testPt )) {
+	if  (isSpecial( board, testPt )) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	testPt = { x: pt.x + 1, y: pt.y };
-	if  (isSpecial( testPt )) {
+	if  (isSpecial( board, testPt )) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	testPt = { x: pt.x, y: pt.y - 1 };
-	if  (isSpecial( testPt )) {
+	if  (isSpecial( board, testPt )) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	testPt = { x: pt.x, y: pt.y + 1 };
-	if  (isSpecial( testPt )) {
+	if  (isSpecial( board, testPt )) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	drawBoard();	
