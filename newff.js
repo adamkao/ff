@@ -165,7 +165,7 @@ function findRoads( board ) {
 					put( board, pt, 'oo' );
 					emptySquaresRemaining--;
 					if (isMarker( board, pt )) {
-						markerToRoad( { x: x, y: y });
+						markerToRoad( pt );
 					}	
 				}
 			}
@@ -181,7 +181,7 @@ function markerToRoad( pt ) {
 	}
 	for (var i = 0; i < 5; i++) {
 		if (_.findWhere( playerTurnOrder[i].markedSpaces, pt )) {
-			playerTurnOrder[i].markedSpaces = _.reject( playerTurnOrder[i].markedSpaces);
+			playerTurnOrder[i].markedSpaces = _.without( playerTurnOrder[i].markedSpaces, pt );
 			playerTurnOrder[i].markersRemaining++;
 			return;
 		}
@@ -374,6 +374,16 @@ function mousemoveMark( e ) {
 	}
 }
 
+function markDoneMousemove( e ) {
+	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
+	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
+
+	drawBoard();
+	if (isEmpty( board, pt )) {
+		imgDrawAt( playerPieceImg, pt.x, pt.y );
+	}	
+}
+
 function mousemovePlace( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
@@ -399,16 +409,18 @@ function clickFirst( e ) {
 		playerTurnOrder[playerOnTurn].markersRemaining--;
 		playerTurnOrder[playerOnTurn].markedSpaces.push( pt );
 	}
-	nextPlayer();
-	if (gameTurn === 2) {
-		$( '#board' ).off( 'mousemove' );		
-		$( '#board' ).mousemove( mousemoveMark );
-		$( '#board' ).off( 'click' );		
-		$( '#board' ).click( clickMark );
-		$( '#board' ).off( 'mouseleave' );		
-		$( '#board' ).mouseleave( drawBoardMark );
-		updateAdjacentList();
-	}
+	$( '#done' ).prop( 'disabled', false );
+	$( '#done' ).off( 'click' );
+	$( '#done' ).click( done );
+	$( '#undo' ).prop( 'disabled', false );
+	$( '#undo' ).off( 'click' );
+	$( '#undo' ).click( undo );
+	$( '#board' ).off( 'click' );
+	$( '#board' ).off( 'mousemove' );		
+	$( '#board' ).mousemove( markDoneMousemove );
+	$( '#board' ).off( 'mouseleave' );		
+	$( '#board' ).mouseleave( drawBoard );
+
 	drawBoard();
 }
 
@@ -436,6 +448,17 @@ function clickMark( e ) {
 	for (var i = 0; i < adjacentList.length; i++) {
 		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
 	}
+	$( '#done' ).prop( 'disabled', false );
+	$( '#done' ).off( 'click' );
+	$( '#done' ).click( done );
+	$( '#undo' ).prop( 'disabled', false );
+	$( '#undo' ).off( 'click' );
+	$( '#undo' ).click( undo );
+	$( '#board' ).off( 'click' );
+	$( '#board' ).off( 'mousemove' );		
+	$( '#board' ).mousemove( markDoneMousemove );
+	$( '#board' ).off( 'mouseleave' );		
+	$( '#board' ).mouseleave( drawBoard );
 }
 
 function clickPlace( e ) {
@@ -472,6 +495,17 @@ function clickPlace( e ) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	drawBoard();	
+	$( '#done' ).prop( 'disabled', false );
+	$( '#done' ).off( 'click' );
+	$( '#done' ).click( done );
+	$( '#undo' ).prop( 'disabled', false );
+	$( '#undo' ).off( 'click' );
+	$( '#undo' ).click( undo );
+	$( '#board' ).off( 'click' );
+	$( '#board' ).off( 'mousemove' );		
+	$( '#board' ).mousemove( markDoneMousemove );
+	$( '#board' ).off( 'mouseleave' );		
+	$( '#board' ).mouseleave( drawBoard );
 }
 
 function pick() {
@@ -479,18 +513,72 @@ function pick() {
 	selectedPiece = 'pk';
 	$( '#board' ).off( 'mousemove' );		
 	$( '#board' ).mousemove( mousemovePlace );
-	$( '#board' ).off( 'click' );		
+	$( '#board' ).off( 'mouseleave' );
+	$( '#board' ).mouseleave( drawBoardPlace );	
+	$( '#board' ).off( 'click' );
 	$( '#board' ).click( clickPlace );
-	$( '#board' ).off( 'mouseleave' );		
-	$( '#board' ).mouseleave( drawBoardPlace );
+	drawBoardPlace();
 }
 
 function undo() {
+
+	board = boardHistory.pop();
+
+	playerTurnOrder[playerOnTurn].markersRemaining++;
+	playerTurnOrder[playerOnTurn].markedSpaces.pop();
+
+	$( '#undo' ).prop( 'disabled', true );
+	$( '#undo' ).off( 'click' );
+	$( '#done' ).prop( 'disabled', true );
+	$( '#done' ).off( 'click' );
+
+	if (gameTurn === 1) {
+		$( '#board' ).off( 'mousemove' );		
+		$( '#board' ).mousemove( mousemoveFirst );
+		$( '#board' ).off( 'mouseleave' );
+		$( '#board' ).mouseleave( drawBoardFirst );	
+		$( '#board' ).off( 'click' );
+		$( '#board' ).click( clickFirst );
+		drawBoardFirst();
+	} else {
+		$( '#board' ).off( 'mousemove' );		
+		$( '#board' ).mousemove( mousemoveMark );
+		$( '#board' ).off( 'click' );		
+		$( '#board' ).click( clickMark );
+		$( '#board' ).off( 'mouseleave' );		
+		$( '#board' ).mouseleave( drawBoardMark );
+		updateAdjacentList();
+		drawBoardMark();
+	}
 }
 
 function done() {
+
 	nextPlayer();
-	drawBoard;
+
+	$( '#undo' ).prop( 'disabled', true );
+	$( '#undo' ).off( 'click' );
+	$( '#done' ).prop( 'disabled', true );
+	$( '#done' ).off( 'click' );
+
+	if (gameTurn === 1) {
+		$( '#board' ).off( 'mousemove' );		
+		$( '#board' ).mousemove( mousemoveFirst );
+		$( '#board' ).off( 'mouseleave' );
+		$( '#board' ).mouseleave( drawBoardFirst );	
+		$( '#board' ).off( 'click' );
+		$( '#board' ).click( clickFirst );
+		drawBoardFirst();
+	} else {
+		$( '#board' ).off( 'mousemove' );		
+		$( '#board' ).mousemove( mousemoveMark );
+		$( '#board' ).off( 'click' );		
+		$( '#board' ).click( clickMark );
+		$( '#board' ).off( 'mouseleave' );		
+		$( '#board' ).mouseleave( drawBoardMark );
+		updateAdjacentList();
+		drawBoardMark();
+	}
 }
 
 $( document ).ready( function(){
@@ -521,8 +609,8 @@ $( document ).ready( function(){
 	$( '#board' ).mouseleave( drawBoardFirst );	
 	$( '#board' ).click( clickFirst );
 	$( '#pick' ).html( '' );	
-	$( '#undo' ).click( undo );
-	$( '#done' ).click( done );
+	$( '#undo' ).prop( 'disabled', true );
+	$( '#done' ).prop( 'disabled', true );
 
 	drawBoard();
 } );
