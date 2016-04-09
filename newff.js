@@ -90,13 +90,23 @@ function isPiece( board, pt ) {
 	return ((p !== '  ') && (p !== '--'));
 }
 
-function hasPieceAdjacent( board, xsq, ysq ) {
-	return (
-		isPiece( board, { x: xsq, y: ysq - 1 } ) ||
-		isPiece( board, { x: xsq - 1, y: ysq } ) ||
-		isPiece( board, { x: xsq + 1, y: ysq } ) ||
-		isPiece( board, { x: xsq, y: ysq + 1 } )
-		);
+function adjacentSquares( pt ) {
+	return ( [
+		{ x: pt.x - 1, y: pt.y },
+		{ x: pt.x + 1, y: pt.y },
+		{ x: pt.x, y: pt.y - 1 },
+		{ x: pt.x, y: pt.y + 1 }
+		] );
+}
+
+function hasPieceAdjacent( board, pt ) {
+	function iter( pt ) {
+		return (isPiece( board, pt ));
+	}
+	function sum( memo, num ) {
+		return (memo + num);
+	}
+	return (_.reduce( _.map( adjacentSquares( pt ), iter ), sum, 0 ));
 }
 
 function fillTest( tempBoard, testx, testy, front ) {
@@ -230,11 +240,14 @@ function checkSpecial( board, x, y ) {
 }
 
 function updateAdjacentList() {
+	var pt = { x: 0, y: 0 };
+
 	adjacentList = [];
 	for (var i = 1; i <= 10; i++) {
 		for (var j = 1; j <= 10; j++) {
-			if (isEmpty( board, { x: i, y: j } ) && hasPieceAdjacent( board, i, j )) {
-				adjacentList.push( { x: i, y: j } );
+			pt = { x: j, y: i };
+			if (isEmpty( board, pt ) && hasPieceAdjacent( board, pt )) {
+				adjacentList.push( pt );
 			}
 		}
 	}
@@ -587,7 +600,7 @@ $( document ).ready( function(){
 
 	for (var i = 0; i < 5; i++ ) {
 		playerMarkImg = playerTurnOrder[i].color + 'mark';
-		turnStr += "<img id='" + playerMarkImg + "' src='" + playerMarkImg + ".png'>" + playerTurnOrder[i].markersRemaining;
+		turnStr += "<img id='" + playerMarkImg + " src='" + playerMarkImg + ".png'>" + playerTurnOrder[i].markersRemaining;
 	}
 	$( '#turnorder' ).html( turnStr );
 
