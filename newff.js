@@ -175,10 +175,6 @@ function findRoads( board ) {
 }
 
 function markerToRoad( pt ) {
-
-	function predicate( testpt ) {
-		return ((pt.x === testpt.x) && (pt.y === testpt.y));
-	}
 	for (var i = 0; i < 5; i++) {
 		if (_.findWhere( playerTurnOrder[i].markedSpaces, pt )) {
 			playerTurnOrder[i].markedSpaces = _.without( playerTurnOrder[i].markedSpaces, pt );
@@ -402,13 +398,19 @@ function clickFirst( e ) {
 	var x = e.pageX - this.offsetLeft, y = e.pageY - this.offsetTop;
 	var pt = { x: Math.ceil( x/50 ), y:  Math.ceil( y/50 ) };
 
-	if (isEmpty( board, pt )) {
-		boardHistory.push( board );
-		board = $.extend( true, [], board );
-		put( board, pt, selectedPiece );
-		playerTurnOrder[playerOnTurn].markersRemaining--;
-		playerTurnOrder[playerOnTurn].markedSpaces.push( pt );
+	if (!isEmpty( board, pt )) {
+		return;
 	}
+	boardHistory.push( board );
+	board = $.extend( true, [], board );
+
+	put( board, pt, selectedPiece );
+	playerTurnOrder[playerOnTurn].markersRemaining--;
+	playerTurnOrder[playerOnTurn].markedSpaces.push( pt );
+
+	drawBoard();
+	
+	$( '#pickbtn' ).prop( 'disabled', true );
 	$( '#done' ).prop( 'disabled', false );
 	$( '#done' ).off( 'click' );
 	$( '#done' ).click( done );
@@ -421,7 +423,6 @@ function clickFirst( e ) {
 	$( '#board' ).off( 'mouseleave' );		
 	$( '#board' ).mouseleave( drawBoard );
 
-	drawBoard();
 }
 
 function clickMark( e ) {
@@ -432,22 +433,16 @@ function clickMark( e ) {
 	if (!_.findWhere( adjacentList, pt )) {
 		return;
 	}
-
 	boardHistory.push( board );
 	board = $.extend( true, [], board );
 
 	put( board, pt, selectedPiece );
-	if (thisPlayer.markersRemaining) {
-		thisPlayer.markedSpaces.push( pt );
-		thisPlayer.markersRemaining--;
-		nextPlayer();
-		updateAdjacentList();
-		drawBoard();
-	}
+	thisPlayer.markersRemaining--;
+	thisPlayer.markedSpaces.push( pt );
 
-	for (var i = 0; i < adjacentList.length; i++) {
-		imgDrawAt( 'tar', adjacentList[i].x, adjacentList[i].y )
-	}
+	drawBoard();
+
+	$( '#pickbtn' ).prop( 'disabled', true );
 	$( '#done' ).prop( 'disabled', false );
 	$( '#done' ).off( 'click' );
 	$( '#done' ).click( done );
@@ -495,6 +490,7 @@ function clickPlace( e ) {
 		checkSpecial( board, testPt.x, testPt.y );
 	}
 	drawBoard();	
+	$( '#pick' ).prop( 'disabled', true );
 	$( '#done' ).prop( 'disabled', false );
 	$( '#done' ).off( 'click' );
 	$( '#done' ).click( done );
@@ -527,6 +523,7 @@ function undo() {
 	playerTurnOrder[playerOnTurn].markersRemaining++;
 	playerTurnOrder[playerOnTurn].markedSpaces.pop();
 
+	$( '#pickbtn' ).prop( 'disabled', false );
 	$( '#undo' ).prop( 'disabled', true );
 	$( '#undo' ).off( 'click' );
 	$( '#done' ).prop( 'disabled', true );
